@@ -34,7 +34,7 @@ export type TaskProps = {
     priority: PriorityProps;
     createdAt: Date;
     updatedAt: Date;
-    dueDate: Date;
+    dueDate: Date | null;
 }
 
 

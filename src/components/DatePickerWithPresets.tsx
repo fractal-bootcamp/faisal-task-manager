@@ -19,10 +19,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-
+import { useTaskStore } from "../../store/taskStore";
 export function DatePickerWithPresets() {
-    // State to track selected date
-    const [date, setDate] = React.useState<Date>()
+    const { task, handleDateChange } = useTaskStore();
 
     return (
         <Popover>
@@ -30,12 +29,12 @@ export function DatePickerWithPresets() {
                 <Button
                     variant={"outline"}
                     className={cn(
-                        "w-[200px] justify-start text-left font-normal", // Changed width to 200px to match other components
-                        !date && "text-muted-foreground"
+                        "w-[200px] justify-start text-left font-normal",
+                        !task.dueDate && "text-muted-foreground"
                     )}
                 >
                     <CalendarIcon />
-                    {date ? format(date, "PPP") : <span>Due date</span>}
+                    {task.dueDate ? format(task.dueDate, "PPP") : <span>Due date</span>}
                 </Button>
             </PopoverTrigger>
             <PopoverContent
@@ -44,11 +43,11 @@ export function DatePickerWithPresets() {
             >
                 <Select
                     onValueChange={(value) =>
-                        setDate(addDays(new Date(), parseInt(value)))
+                        handleDateChange(addDays(new Date(), parseInt(value)))
                     }
                 >
                     <SelectTrigger>
-                        <SelectValue placeholder="Preset date" />
+                        <SelectValue placeholder="Preset dates" />
                     </SelectTrigger>
                     <SelectContent position="popper">
                         <SelectItem value="0">Today</SelectItem>
@@ -60,7 +59,12 @@ export function DatePickerWithPresets() {
                     </SelectContent>
                 </Select>
                 <div className="rounded-md border">
-                    <Calendar mode="single" selected={date} onSelect={setDate} />
+                    <Calendar
+                        mode="single"
+                        selected={task.dueDate || undefined}
+                        onSelect={(date) => date && handleDateChange(date)}
+                        initialFocus
+                    />
                 </div>
             </PopoverContent>
         </Popover>

@@ -1,18 +1,13 @@
-import { TaskFormProps, STATUS_OPTIONS, PRIORITY_OPTIONS } from "../../types/types";
+"use client"
+
 import { Button } from "./ui/button";
 import { DatePickerWithPresets } from "./DatePickerWithPresets";
-import { Badge } from "./ui/badge";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { StatusOptions } from "./StatusOptions";
 import { PriorityOptions } from "./PriorityOptions";
+import { useTaskStore } from "../../store/taskStore";
 
-const TaskForm: React.FC<TaskFormProps> = ({
-    title,
-    description,
-    status,
-    priority,
-    dueDate,
-}) => {
+const TaskForm: React.FC = () => {
+    const { task, handleTitleChange, handleDescriptionChange, handleCreateTask, handleCancelTask } = useTaskStore();
     return (
         <form className="max-w-3xl mx-auto p-6 space-y-8">
             {/* Header section */}
@@ -21,7 +16,8 @@ const TaskForm: React.FC<TaskFormProps> = ({
                     type="text"
                     id="title"
                     name="title"
-                    value={title}
+                    value={task.title}
+                    onChange={(e) => handleTitleChange(e.target.value)}
                     placeholder="Task title..."
                     className="text-3xl font-bold w-full bg-transparent border-none focus:outline-none placeholder:text-gray-400"
                 />
@@ -52,7 +48,8 @@ const TaskForm: React.FC<TaskFormProps> = ({
                     <textarea
                         id="description"
                         name="description"
-                        value={description}
+                        value={task.description}
+                        onChange={(e) => handleDescriptionChange(e.target.value)}
                         rows={4}
                         placeholder="Task description..."
                         className="w-full p-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -61,10 +58,10 @@ const TaskForm: React.FC<TaskFormProps> = ({
 
                 {/* Form actions */}
                 <div className="flex justify-end space-x-3 pt-4">
-                    <Button variant="outline" type="button">
+                    <Button variant="outline" type="button" onClick={handleCancelTask}>
                         Cancel
                     </Button>
-                    <Button type="submit">
+                    <Button type="submit" onClick={handleCreateTask}>
                         Create Task
                     </Button>
                 </div>

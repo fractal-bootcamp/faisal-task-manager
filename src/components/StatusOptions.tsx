@@ -11,11 +11,11 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
-import { STATUS_OPTIONS } from "../../types/types";
+import { STATUS_OPTIONS, StatusProps } from "../../types/types";
+import { useTaskStore } from "../../store/taskStore"
 
 export function StatusOptions() {
-    // State to track selected status
-    const [status, setStatus] = React.useState<string>("")
+    const { task, handleStatusChange } = useTaskStore();
 
     return (
         <Popover>
@@ -24,12 +24,12 @@ export function StatusOptions() {
                     variant={"outline"}
                     className={cn(
                         "w-[200px] justify-start text-left font-normal",
-                        !status && "text-muted-foreground"
+                        !task.status && "text-muted-foreground"
                     )}
                 >
                     <HamburgerMenuIcon className="h-4 w-4" />
-                    {status ? (
-                        <Badge variant="default" className="py-1">{status}</Badge>
+                    {task.status ? (
+                        <Badge variant="default" className="py-1">{task.status}</Badge>
                     ) : (
                         <span>Status</span>
                     )}
@@ -42,7 +42,7 @@ export function StatusOptions() {
                             key={statusOption}
                             variant="ghost"
                             className="justify-start"
-                            onClick={() => setStatus(statusOption)}
+                            onClick={() => handleStatusChange(statusOption as StatusProps)}
                         >
                             <Badge variant="secondary" className="py-1">{statusOption}</Badge>
                         </Button>

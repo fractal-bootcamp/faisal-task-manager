@@ -12,11 +12,11 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
-import { PRIORITY_OPTIONS } from "../../types/types";
+import { PRIORITY_OPTIONS, PriorityProps } from "../../types/types";
+import { useTaskStore } from "../../store/taskStore"
 
 export function PriorityOptions() {
-    // State to track selected priority
-    const [priority, setPriority] = React.useState<string>("")
+    const { task, handlePriorityChange } = useTaskStore();
 
     return (
         <Popover>
@@ -25,12 +25,12 @@ export function PriorityOptions() {
                     variant={"outline"}
                     className={cn(
                         "w-[200px] justify-start text-left font-normal",
-                        !priority && "text-muted-foreground"
+                        !task.priority && "text-muted-foreground"
                     )}
                 >
                     <TargetIcon className="h-4 w-4" />
-                    {priority ? (
-                        <Badge variant="default" className="py-1">{priority}</Badge>
+                    {task.priority ? (
+                        <Badge variant="default" className="py-1">{task.priority}</Badge>
                     ) : (
                         <span>Priority</span>
                     )}
@@ -43,7 +43,7 @@ export function PriorityOptions() {
                             key={priorityOption}
                             variant="ghost"
                             className="justify-start"
-                            onClick={() => setPriority(priorityOption)}
+                            onClick={() => handlePriorityChange(priorityOption as PriorityProps)}
                         >
                             <Badge variant="secondary" className="py-1">{priorityOption}</Badge>
                         </Button>
