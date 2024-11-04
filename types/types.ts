@@ -49,10 +49,11 @@ export type TaskViewProps = {
 
 export interface TaskCardProps {
     task: TaskProps;
-    onStatusChange: (id: string, status: StatusProps) => void;
-    onPriorityChange: (id: string, priority: PriorityProps) => void;
-    onTitleChange: (id: string, title: string) => void;
-    onDateChange: (id: string, date: Date) => void;
+    onStatusChange: (status: StatusProps) => void;
+    onPriorityChange: (priority: PriorityProps) => void;
+    onTitleChange: (title: string) => void;
+    onDescriptionChange: (description: string) => void;
+    onDateChange: (date: Date) => void;
 }
 
 export interface StatusOptionsProps {
@@ -68,6 +69,15 @@ export interface PriorityOptionsProps {
 export interface DatePickerWithPresetsProps {
     currentDate: Date | null;
     onDateChange: (date: Date) => void;
+}
+
+// Add task update handlers types
+export interface TaskUpdateHandlers {
+    onStatusChange: (id: string, status: StatusProps) => void;
+    onPriorityChange: (id: string, priority: PriorityProps) => void;
+    onTitleChange: (id: string, title: string) => void;
+    onDescriptionChange: (id: string, description: string) => void;
+    onDateChange: (id: string, date: Date) => void;
 }
 
 // Badge colors for status options
