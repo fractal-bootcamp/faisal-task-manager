@@ -19,10 +19,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import { useTaskStore } from "../../store/taskStore";
-export function DatePickerWithPresets() {
-    const { task, handleDateChange } = useTaskStore();
+import { DatePickerWithPresetsProps } from "../../types/types";
 
+const DatePickerWithPresets: React.FC<DatePickerWithPresetsProps> = ({ currentDate, onDateChange }) => {
     return (
         <Popover>
             <PopoverTrigger asChild>
@@ -30,20 +29,17 @@ export function DatePickerWithPresets() {
                     variant={"outline"}
                     className={cn(
                         "w-[200px] justify-start text-left font-normal",
-                        !task.dueDate && "text-muted-foreground"
+                        !currentDate && "text-muted-foreground"
                     )}
                 >
-                    <CalendarIcon />
-                    {task.dueDate ? format(task.dueDate, "PPP") : <span>Due date</span>}
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {currentDate ? format(currentDate, "PPP") : <span>Due date</span>}
                 </Button>
             </PopoverTrigger>
-            <PopoverContent
-                align="start"
-                className="flex w-auto flex-col space-y-2 p-2"
-            >
+            <PopoverContent align="start" className="flex w-auto flex-col space-y-2 p-2">
                 <Select
                     onValueChange={(value) =>
-                        handleDateChange(addDays(new Date(), parseInt(value)))
+                        onDateChange(addDays(new Date(), parseInt(value)))
                     }
                 >
                     <SelectTrigger>
@@ -61,8 +57,8 @@ export function DatePickerWithPresets() {
                 <div className="rounded-md border">
                     <Calendar
                         mode="single"
-                        selected={task.dueDate || undefined}
-                        onSelect={(date) => date && handleDateChange(date)}
+                        selected={currentDate || undefined}
+                        onSelect={(date) => date && onDateChange(date)}
                         initialFocus
                     />
                 </div>
@@ -70,3 +66,5 @@ export function DatePickerWithPresets() {
         </Popover>
     )
 }
+
+export default DatePickerWithPresets;

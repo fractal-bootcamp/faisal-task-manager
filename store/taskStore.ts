@@ -1,7 +1,9 @@
 import { create } from "zustand"
-import { PriorityProps, StatusProps, TaskFormProps } from "../types/types"
+import { v4 as uuidv4 } from 'uuid';
+import { PriorityProps, StatusProps, TaskFormProps, TaskProps } from "../types/types"
 
 interface TaskStoreProps {
+    tasks: TaskProps[];
     task: TaskFormProps;
     // Form handling methods
     handleTitleChange: (title: string) => void;
@@ -11,6 +13,10 @@ interface TaskStoreProps {
     handlePriorityChange: (priority: PriorityProps) => void;
     handleCreateTask: () => void;
     handleCancelTask: () => void;
+    // New methods for task management
+    addTask: (task: TaskProps) => void;
+    updateTask: (id: string, updates: Partial<TaskProps>) => void;
+    deleteTask: (id: string) => void;
 }
 
 // Initial state for the task form
@@ -24,7 +30,7 @@ const initialTaskState: TaskFormProps = {
 }
 
 export const useTaskStore = create<TaskStoreProps>((set) => ({
-    // Initial state
+    tasks: [], // Initialize empty tasks array
     task: initialTaskState,
 
     // Handle title change
@@ -54,14 +60,37 @@ export const useTaskStore = create<TaskStoreProps>((set) => ({
 
     // Handle task creation
     handleCreateTask: () => set((state) => {
-        // Here you can add additional logic like API calls
-        console.log('Task created:', state.task)
-        return { task: initialTaskState } // Reset form after creation
+        const newTask: TaskProps = {
+            ...state.task,
+            id: uuidv4(),
+            updatedAt: new Date(),
+        };
+        return {
+            tasks: [...state.tasks, newTask],
+            task: initialTaskState
+        };
     }),
 
     // Handle cancel - reset form to initial state
     handleCancelTask: () => set(() => ({
         task: initialTaskState
+    })),
+
+    // Handle adding a new task
+    addTask: (newTask) => set((state) => ({
+        tasks: [...state.tasks, newTask]
+    })),
+
+    // Handle updating a task
+    updateTask: (id, updates) => set((state) => ({
+        tasks: state.tasks.map(task =>
+            task.id === id ? { ...task, ...updates } : task
+        )
+    })),
+
+    // Handle deleting a task
+    deleteTask: (id) => set((state) => ({
+        tasks: state.tasks.filter(task => task.id !== id)
     })),
 }))
 
