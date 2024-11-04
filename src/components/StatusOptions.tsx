@@ -27,7 +27,10 @@ const StatusOptions: React.FC<StatusOptionsProps> = ({ currentStatus, onStatusCh
                 >
                     <HamburgerMenuIcon className="h-4 w-4" />
                     {currentStatus ? (
-                        <Badge variant="default" className={STATUS_BADGE_COLORS[currentStatus as keyof typeof STATUS_BADGE_COLORS]}>
+                        <Badge variant="default" className={cn(
+                            "font-semibold",
+                            STATUS_BADGE_COLORS[currentStatus]
+                        )}>
                             {currentStatus}
                         </Badge>
                     ) : (
@@ -44,7 +47,10 @@ const StatusOptions: React.FC<StatusOptionsProps> = ({ currentStatus, onStatusCh
                             className="justify-start"
                             onClick={() => onStatusChange(statusOption as StatusProps)}
                         >
-                            <Badge variant="secondary" className={STATUS_BADGE_COLORS[statusOption as keyof typeof STATUS_BADGE_COLORS]}>
+                            <Badge variant="secondary" className={cn(
+                                "font-semibold",
+                                STATUS_BADGE_COLORS[statusOption as keyof typeof STATUS_BADGE_COLORS]
+                            )}>
                                 {statusOption}
                             </Badge>
                         </Button>

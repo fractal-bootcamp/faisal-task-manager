@@ -20,7 +20,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
     } = useTaskStore();
 
     return (
-        <form onSubmit={handleCreateTask} className="max-w-3xl mx-auto p-6 space-y-8">
+        <form onSubmit={handleCreateTask} className="w-full space-y-8">
             {/* Header section */}
             <div className="border-b pb-4">
                 <input

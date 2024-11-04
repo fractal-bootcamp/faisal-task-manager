@@ -82,15 +82,15 @@ export interface TaskUpdateHandlers {
 
 // Badge colors for status options
 export const STATUS_BADGE_COLORS = {
-    'Pending': 'font-semibold bg-gray-200 text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200',
-    'In Progress': 'font-semibold bg-yellow-200 text-yellow-800 hover:bg-yellow-200 dark:bg-yellow-900 dark:text-yellow-200',
-    'Completed': 'font-semibold bg-green-200 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200',
-    'Archived': 'font-semibold bg-blue-200 text-blue-800 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200'
+    [StatusProps.PENDING]: 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
+    [StatusProps.IN_PROGRESS]: 'bg-yellow-200 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+    [StatusProps.COMPLETED]: 'bg-green-200 text-green-800 dark:bg-green-900 dark:text-green-200',
+    [StatusProps.ARCHIVED]: 'bg-blue-200 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
 } as const;
 
 // Badge colors for priority options
 export const PRIORITY_BADGE_COLORS = {
-    Low: 'font-semibold bg-green-200 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200',
-    Medium: 'font-semibold bg-yellow-200 text-yellow-800 hover:bg-yellow-200 dark:bg-yellow-900 dark:text-yellow-200',
-    High: 'font-semibold bg-red-200 text-red-800 hover:bg-red-200 dark:bg-red-900 dark:text-red-200'
+    [PriorityProps.LOW]: 'bg-green-200 text-green-800 dark:bg-green-900 dark:text-green-200',
+    [PriorityProps.MEDIUM]: 'bg-yellow-200 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+    [PriorityProps.HIGH]: 'bg-red-200 text-red-800 dark:bg-red-900 dark:text-red-200'
 } as const;

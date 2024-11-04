@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { STATUS_BADGE_COLORS } from "../../../types/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import TaskForm from "@/components/TaskForm";
 
 const TaskView: React.FC = () => {
@@ -41,10 +41,7 @@ const TaskView: React.FC = () => {
 
                 {/* Task Creation Modal */}
                 <Dialog open={isTaskModalOpen} onOpenChange={closeTaskModal}>
-                    <DialogContent className="sm:max-w-[425px]">
-                        <DialogHeader>
-                            <DialogTitle>Create New Task</DialogTitle>
-                        </DialogHeader>
+                    <DialogContent>
                         <TaskForm />
                     </DialogContent>
                 </Dialog>
@@ -63,20 +60,30 @@ const TaskView: React.FC = () => {
                             {tasks
                                 .filter(task => task.status === status)
                                 .map(task => (
-                                    <TaskCard
-                                        key={task.id}
-                                        task={task}
-                                        onStatusChange={(status) =>
-                                            handleTaskStatusChange(task.id, status)}
-                                        onPriorityChange={(priority) =>
-                                            handleTaskPriorityChange(task.id, priority)}
-                                        onTitleChange={(title) =>
-                                            handleTaskTitleChange(task.id, title)}
-                                        onDescriptionChange={(description) =>
-                                            handleTaskDescriptionChange(task.id, description)}
-                                        onDateChange={(date) =>
-                                            handleTaskDateChange(task.id, date)}
-                                    />
+                                    // Using Dialog component to show TaskCard in a modal
+                                    <Dialog key={task.id}>
+                                        <DialogTrigger asChild>
+                                            {/* Preview card that opens the dialog */}
+                                            <div className="p-4 bg-white dark:bg-zinc-800 rounded-lg shadow cursor-pointer hover:shadow-md transition-shadow">
+                                                <h3 className="font-medium">{task.title}</h3>
+                                            </div>
+                                        </DialogTrigger>
+                                        <DialogContent>
+                                            <TaskCard
+                                                task={task}
+                                                onStatusChange={(status) =>
+                                                    handleTaskStatusChange(task.id, status)}
+                                                onPriorityChange={(priority) =>
+                                                    handleTaskPriorityChange(task.id, priority)}
+                                                onTitleChange={(title) =>
+                                                    handleTaskTitleChange(task.id, title)}
+                                                onDescriptionChange={(description) =>
+                                                    handleTaskDescriptionChange(task.id, description)}
+                                                onDateChange={(date) =>
+                                                    handleTaskDateChange(task.id, date)}
+                                            />
+                                        </DialogContent>
+                                    </Dialog>
                                 ))}
                         </div>
                     </div>
