@@ -80,6 +80,16 @@ export interface TaskUpdateHandlers {
     onDateChange: (id: string, date: Date) => void;
 }
 
+// Add these to the existing TaskStoreProps interface
+export interface TaskStoreProps extends TaskUpdateHandlers {
+    // ... existing properties
+    handleUpdateTask: (e: React.FormEvent, id: string) => void;
+    handleCancelTaskEdit: () => void;
+    isTaskEditModalOpen: boolean;
+    selectedTask: TaskProps | null;
+    setSelectedTask: (task: TaskProps | null) => void;
+}
+
 // Badge colors for status options
 export const STATUS_BADGE_COLORS = {
     [StatusProps.PENDING]: 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
@@ -94,3 +104,5 @@ export const PRIORITY_BADGE_COLORS = {
     [PriorityProps.MEDIUM]: 'bg-yellow-200 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
     [PriorityProps.HIGH]: 'bg-red-200 text-red-800 dark:bg-red-900 dark:text-red-200'
 } as const;
+
+
