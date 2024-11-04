@@ -4,7 +4,7 @@ import { format } from "date-fns"
 import StatusOptions from "./StatusOptions"
 import PriorityOptions from "./PriorityOptions"
 import DatePickerWithPresets from "./DatePickerWithPresets"
-import { TaskCardProps } from "../../types/types"
+import { PriorityProps, TaskCardProps } from "../../types/types"
 
 const TaskCard: React.FC<TaskCardProps> = ({
     task,
@@ -37,7 +37,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
                     <span className="text-sm text-zinc-500">Priority:</span>
                     <PriorityOptions
                         currentPriority={task.priority}
-                        onPriorityChange={(priority) => onPriorityChange(task.id, priority)}
+                        onPriorityChange={(priority: PriorityProps) => onPriorityChange(task.id, priority)}
                     />
                 </div>
 

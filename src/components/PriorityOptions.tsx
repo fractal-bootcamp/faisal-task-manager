@@ -13,11 +13,17 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover"
 import { PRIORITY_OPTIONS, PriorityProps } from "../../types/types";
-import { useTaskStore } from "../../store/taskStore"
+import { PRIORITY_BADGE_COLORS } from "../../types/types";
 
-const PriorityOptions: React.FC = () => {
-    const { task, handlePriorityChange } = useTaskStore();
+interface PriorityOptionsProps {
+    currentPriority: PriorityProps;
+    onPriorityChange: (priority: PriorityProps) => void;
+}
 
+const PriorityOptions: React.FC<PriorityOptionsProps> = ({
+    currentPriority,
+    onPriorityChange
+}) => {
     return (
         <Popover>
             <PopoverTrigger asChild>
@@ -25,12 +31,14 @@ const PriorityOptions: React.FC = () => {
                     variant={"outline"}
                     className={cn(
                         "w-[200px] justify-start text-left font-normal",
-                        !task.priority && "text-muted-foreground"
+                        !currentPriority && "text-muted-foreground"
                     )}
                 >
                     <TargetIcon className="h-4 w-4" />
-                    {task.priority ? (
-                        <Badge variant="default" className="py-1">{task.priority}</Badge>
+                    {currentPriority ? (
+                        <Badge variant="default" className={PRIORITY_BADGE_COLORS[currentPriority]}>
+                            {currentPriority}
+                        </Badge>
                     ) : (
                         <span>Priority</span>
                     )}
@@ -43,9 +51,11 @@ const PriorityOptions: React.FC = () => {
                             key={priorityOption}
                             variant="ghost"
                             className="justify-start"
-                            onClick={() => handlePriorityChange(priorityOption as PriorityProps)}
+                            onClick={() => onPriorityChange(priorityOption as PriorityProps)}
                         >
-                            <Badge variant="secondary" className="py-1">{priorityOption}</Badge>
+                            <Badge variant="secondary" className={PRIORITY_BADGE_COLORS[priorityOption]}>
+                                {priorityOption}
+                            </Badge>
                         </Button>
                     ))}
                 </div>
