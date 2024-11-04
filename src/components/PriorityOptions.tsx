@@ -36,7 +36,10 @@ const PriorityOptions: React.FC<PriorityOptionsProps> = ({
                 >
                     <TargetIcon className="h-4 w-4" />
                     {currentPriority ? (
-                        <Badge variant="default" className={PRIORITY_BADGE_COLORS[currentPriority]}>
+                        <Badge variant="default" className={cn(
+                            "font-semibold",
+                            PRIORITY_BADGE_COLORS[currentPriority]
+                        )}>
                             {currentPriority}
                         </Badge>
                     ) : (
@@ -53,7 +56,10 @@ const PriorityOptions: React.FC<PriorityOptionsProps> = ({
                             className="justify-start"
                             onClick={() => onPriorityChange(priorityOption as PriorityProps)}
                         >
-                            <Badge variant="secondary" className={PRIORITY_BADGE_COLORS[priorityOption]}>
+                            <Badge variant="secondary" className={cn(
+                                "font-semibold",
+                                PRIORITY_BADGE_COLORS[priorityOption]
+                            )}>
                                 {priorityOption}
                             </Badge>
                         </Button>
