@@ -7,6 +7,8 @@ interface TaskStoreProps {
     tasks: TaskProps[];
     task: TaskFormProps;
     isTaskModalOpen: boolean;
+    isTaskEditModalOpen: boolean;
+    selectedTask: TaskProps | null;
 
     // Form handlers
     handleTitleChange: (title: string) => void;
@@ -35,6 +37,13 @@ interface TaskStoreProps {
     addTask: (task: TaskProps) => void;
     updateTask: (id: string, updates: Partial<TaskProps>) => void;
     deleteTask: (id: string) => void;
+
+    // Update handlers
+    handleUpdateTask: (e: React.FormEvent, id: string) => void;
+    handleCancelTaskEdit: () => void;
+
+    // Task handlers
+    setSelectedTask: (task: TaskProps | null) => void;
 }
 
 // Initial state for the task form
@@ -51,8 +60,10 @@ export const useTaskStore = create<TaskStoreProps>((set) => ({
     tasks: sampleTasks,
     task: initialTaskState,
     isTaskModalOpen: false,
+    isTaskEditModalOpen: false,
+    selectedTask: null,
 
-    // Form handlers
+    // Form handlers for updating the current task form state
     handleTitleChange: (title) => set((state) => ({
         task: { ...state.task, title }
     })),
@@ -73,7 +84,7 @@ export const useTaskStore = create<TaskStoreProps>((set) => ({
         task: { ...state.task, priority }
     })),
 
-    // Task update handlers
+    // Task update handlers for modifying existing tasks
     handleTaskStatusChange: (id, status) => set((state) => ({
         tasks: state.tasks.map(task =>
             task.id === id ? { ...task, status, updatedAt: new Date() } : task
@@ -104,7 +115,7 @@ export const useTaskStore = create<TaskStoreProps>((set) => ({
         )
     })),
 
-    // Task handlers
+    // Task creation and cancellation handlers
     handleCreateTask: (e) => {
         e.preventDefault();
         set((state) => {
@@ -126,7 +137,7 @@ export const useTaskStore = create<TaskStoreProps>((set) => ({
         isTaskModalOpen: false
     })),
 
-    // Submit task handler
+    // Task submission handler
     handleSubmitTask: () => set((state) => {
         const newTask: TaskProps = {
             ...state.task,
@@ -140,11 +151,11 @@ export const useTaskStore = create<TaskStoreProps>((set) => ({
         };
     }),
 
-    // Modal handlers
+    // Modal visibility handlers
     openTaskModal: () => set({ isTaskModalOpen: true }),
     closeTaskModal: () => set({ isTaskModalOpen: false }),
 
-    // Task operations
+    // Task CRUD operations
     addTask: (newTask) => set((state) => ({
         tasks: [...state.tasks, newTask]
     })),
@@ -157,5 +168,49 @@ export const useTaskStore = create<TaskStoreProps>((set) => ({
 
     deleteTask: (id) => set((state) => ({
         tasks: state.tasks.filter(task => task.id !== id)
+    })),
+
+    // Task edit handlers
+    handleUpdateTask: (e, id) => {
+        e.preventDefault();
+        set((state) => {
+            // Find the task being updated
+            const taskToUpdate = state.tasks.find(task => task.id === id);
+            if (!taskToUpdate) return state;
+
+            // Update the tasks array with the modified task
+            const updatedTasks = state.tasks.map(task =>
+                task.id === id
+                    ? {
+                        ...taskToUpdate,
+                        title: task.title,
+                        description: task.description,
+                        status: task.status,
+                        priority: task.priority,
+                        dueDate: task.dueDate,
+                        updatedAt: new Date()
+                    }
+                    : task
+            );
+
+            return {
+                tasks: updatedTasks,
+                selectedTask: null,
+                isTaskEditModalOpen: false
+            };
+        });
+    },
+
+    handleCancelTaskEdit: () => set(() => ({
+        task: initialTaskState,
+        isTaskEditModalOpen: false,
+        selectedTask: null
+    })),
+
+    // Selected task management
+    setSelectedTask: (task) => set(() => ({
+        selectedTask: task,
+        task: task || initialTaskState,
+        isTaskEditModalOpen: !!task
     }))
 }))

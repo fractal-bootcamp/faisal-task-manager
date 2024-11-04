@@ -20,7 +20,11 @@ const TaskView: React.FC = () => {
         handleTaskPriorityChange,
         handleTaskTitleChange,
         handleTaskDescriptionChange,
-        handleTaskDateChange
+        handleTaskDateChange,
+        isTaskEditModalOpen,
+        selectedTask,
+        setSelectedTask,
+        handleCancelTaskEdit
     } = useTaskStore();
 
     return (
@@ -64,11 +68,21 @@ const TaskView: React.FC = () => {
                                 .filter(task => task.status === status)
                                 .map(task => (
                                     // Using Dialog component to show TaskCard in a modal
-                                    <Dialog key={task.id}>
+                                    <Dialog
+                                        key={task.id}
+                                        open={isTaskEditModalOpen && selectedTask?.id === task.id}
+                                        onOpenChange={(open) => {
+                                            if (open) {
+                                                setSelectedTask(task);
+                                            } else {
+                                                handleCancelTaskEdit();
+                                            }
+                                        }}
+                                    >
                                         <DialogTrigger asChild>
                                             {/* Preview card that opens the dialog */}
                                             <div className="p-4 bg-white dark:bg-zinc-800 rounded-lg shadow cursor-pointer hover:shadow-md transition-shadow">
-                                                <h3 className="font-medium mb-2">{task.title}</h3>
+                                                <h3 className="font-medium mb-2 text-xl">{task.title}</h3>
                                                 <div className="flex flex-col gap-2">
                                                     <Badge variant="outline" className="px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 w-fit">
                                                         Priority: {task.priority}

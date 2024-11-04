@@ -10,17 +10,17 @@ import { TaskCardProps } from "../../types/types";
 // Component for creating/editing tasks with form fields for title, description, due date, status and priority
 const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
     const {
-        handleCreateTask,
         handleTaskStatusChange,
         handleTaskPriorityChange,
         handleTaskTitleChange,
         handleTaskDescriptionChange,
         handleTaskDateChange,
-        handleCancelTask
+        handleUpdateTask,
+        handleCancelTaskEdit
     } = useTaskStore();
 
     return (
-        <form onSubmit={handleCreateTask} className="w-full space-y-8">
+        <form onSubmit={(e) => handleUpdateTask(e, task.id)} className="w-full space-y-8">
             {/* Header section */}
             <div className="border-b pb-4">
                 <input
@@ -78,11 +78,16 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
 
                 {/* Form actions */}
                 <div className="flex justify-end space-x-3 pt-4">
-                    <Button variant="outline" type="button" onClick={handleCancelTask} className="font-semibold">
+                    <Button
+                        variant="outline"
+                        type="button"
+                        onClick={handleCancelTaskEdit}
+                        className="font-semibold"
+                    >
                         Cancel
                     </Button>
                     <Button type="submit" className="font-semibold">
-                        Create Task
+                        Update Task
                     </Button>
                 </div>
             </div>
