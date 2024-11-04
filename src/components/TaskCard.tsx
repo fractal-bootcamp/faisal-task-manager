@@ -1,60 +1,93 @@
 "use client"
 
-import { format } from "date-fns"
-import StatusOptions from "./StatusOptions"
-import PriorityOptions from "./PriorityOptions"
-import DatePickerWithPresets from "./DatePickerWithPresets"
-import { PriorityProps, TaskCardProps } from "../../types/types"
+import { Button } from "./ui/button";
+import DatePickerWithPresets from "./DatePickerWithPresets";
+import StatusOptions from "./StatusOptions";
+import PriorityOptions from "./PriorityOptions";
+import { useTaskStore } from "../../store/taskStore";
+import { TaskCardProps } from "../../types/types";
 
-const TaskCard: React.FC<TaskCardProps> = ({
-    task,
-    onStatusChange,
-    onPriorityChange,
-    onTitleChange,
-    onDateChange
-}) => {
+// Component for creating/editing tasks with form fields for title, description, due date, status and priority
+const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
+    const {
+        handleCreateTask,
+        handleTaskStatusChange,
+        handleTaskPriorityChange,
+        handleTaskTitleChange,
+        handleTaskDescriptionChange,
+        handleTaskDateChange,
+        handleCancelTask
+    } = useTaskStore();
+
     return (
-        <div className="bg-white dark:bg-zinc-800 p-4 rounded-lg shadow-sm border border-zinc-200 dark:border-zinc-700">
-            {/* Title */}
-            <input
-                type="text"
-                value={task.title}
-                onChange={(e) => onTitleChange(task.id, e.target.value)}
-                className="text-lg font-semibold w-full bg-transparent border-none focus:outline-none"
-            />
+        <form onSubmit={handleCreateTask} className="max-w-3xl mx-auto p-6 space-y-8">
+            {/* Header section */}
+            <div className="border-b pb-4">
+                <input
+                    type="text"
+                    id="title"
+                    name="title"
+                    value={task.title}
+                    onChange={(e) => handleTaskTitleChange(task.id, e.target.value)}
+                    placeholder="Task title..."
+                    className="text-3xl font-bold w-full bg-transparent border-none focus:outline-none placeholder:text-gray-400"
+                />
+            </div>
 
-            {/* Metadata */}
-            <div className="mt-4 space-y-2">
-                <div className="flex items-center gap-2">
-                    <span className="text-sm text-zinc-500">Status:</span>
-                    <StatusOptions
-                        currentStatus={task.status}
-                        onStatusChange={(status) => onStatusChange(task.id, status)}
-                    />
-                </div>
-
-                <div className="flex items-center gap-2">
-                    <span className="text-sm text-zinc-500">Priority:</span>
-                    <PriorityOptions
-                        currentPriority={task.priority}
-                        onPriorityChange={(priority: PriorityProps) => onPriorityChange(task.id, priority)}
-                    />
-                </div>
-
-                <div className="flex items-center gap-2">
-                    <span className="text-sm text-zinc-500">Due:</span>
+            {/* Task metadata section - Due date, Status, and Priority displayed in a row */}
+            <div className="flex flex-row justify-center gap-4 items-start">
+                {/* Due date field with preset options */}
+                <div>
                     <DatePickerWithPresets
                         currentDate={task.dueDate}
-                        onDateChange={(date) => onDateChange(task.id, date)}
+                        onDateChange={(date) => handleTaskDateChange(task.id, date)}
                     />
                 </div>
 
-                <div className="text-sm text-zinc-500">
-                    Created: {format(task.createdAt, "PPP")}
+                {/* Status selection */}
+                <div>
+                    <StatusOptions
+                        currentStatus={task.status}
+                        onStatusChange={(status) => handleTaskStatusChange(task.id, status)}
+                    />
+                </div>
+
+                {/* Priority selection */}
+                <div>
+                    <PriorityOptions
+                        currentPriority={task.priority}
+                        onPriorityChange={(priority) => handleTaskPriorityChange(task.id, priority)}
+                    />
                 </div>
             </div>
-        </div>
-    )
-}
+
+            {/* Main form content */}
+            <div className="space-y-6">
+                {/* Description field */}
+                <div className="space-y-2">
+                    <textarea
+                        id="description"
+                        name="description"
+                        value={task.description}
+                        onChange={(e) => handleTaskDescriptionChange(task.id, e.target.value)}
+                        rows={4}
+                        placeholder="Task description..."
+                        className="w-full p-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                </div>
+
+                {/* Form actions */}
+                <div className="flex justify-end space-x-3 pt-4">
+                    <Button variant="outline" type="button" onClick={handleCancelTask} className="font-semibold">
+                        Cancel
+                    </Button>
+                    <Button type="submit" className="font-semibold">
+                        Create Task
+                    </Button>
+                </div>
+            </div>
+        </form>
+    );
+};
 
 export default TaskCard;

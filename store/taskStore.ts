@@ -5,15 +5,32 @@ import { PriorityProps, StatusProps, TaskFormProps, TaskProps } from "../types/t
 interface TaskStoreProps {
     tasks: TaskProps[];
     task: TaskFormProps;
-    // Form handling methods
+    isTaskModalOpen: boolean;
+
+    // Form handlers
     handleTitleChange: (title: string) => void;
     handleDescriptionChange: (description: string) => void;
     handleDateChange: (date: Date) => void;
     handleStatusChange: (status: StatusProps) => void;
     handlePriorityChange: (priority: PriorityProps) => void;
-    handleCreateTask: () => void;
+
+    // Task update handlers
+    handleTaskStatusChange: (id: string, status: StatusProps) => void;
+    handleTaskPriorityChange: (id: string, priority: PriorityProps) => void;
+    handleTaskTitleChange: (id: string, title: string) => void;
+    handleTaskDescriptionChange: (id: string, description: string) => void;
+    handleTaskDateChange: (id: string, date: Date) => void;
+
+    // Task handlers
+    handleCreateTask: (e: React.FormEvent) => void;
     handleCancelTask: () => void;
-    // New methods for task management
+    handleSubmitTask: () => void;
+
+    // Modal handlers
+    openTaskModal: () => void;
+    closeTaskModal: () => void;
+
+    // Task operations
     addTask: (task: TaskProps) => void;
     updateTask: (id: string, updates: Partial<TaskProps>) => void;
     deleteTask: (id: string) => void;
@@ -30,36 +47,86 @@ const initialTaskState: TaskFormProps = {
 }
 
 export const useTaskStore = create<TaskStoreProps>((set) => ({
-    tasks: [], // Initialize empty tasks array
+    tasks: [],
     task: initialTaskState,
+    isTaskModalOpen: false,
 
-    // Handle title change
-    handleTitleChange: (title: string) => set((state) => ({
+    // Form handlers
+    handleTitleChange: (title) => set((state) => ({
         task: { ...state.task, title }
     })),
 
-    // Handle description change
-    handleDescriptionChange: (description: string) => set((state) => ({
+    handleDescriptionChange: (description) => set((state) => ({
         task: { ...state.task, description }
     })),
 
-    // Handle date change
-    handleDateChange: (date: Date) => set((state) => ({
+    handleDateChange: (date) => set((state) => ({
         task: { ...state.task, dueDate: date }
     })),
 
-    // Handle status change
-    handleStatusChange: (status: StatusProps) => set((state) => ({
+    handleStatusChange: (status) => set((state) => ({
         task: { ...state.task, status }
     })),
 
-    // Handle priority change
-    handlePriorityChange: (priority: PriorityProps) => set((state) => ({
+    handlePriorityChange: (priority) => set((state) => ({
         task: { ...state.task, priority }
     })),
 
-    // Handle task creation
-    handleCreateTask: () => set((state) => {
+    // Task update handlers
+    handleTaskStatusChange: (id, status) => set((state) => ({
+        tasks: state.tasks.map(task =>
+            task.id === id ? { ...task, status, updatedAt: new Date() } : task
+        )
+    })),
+
+    handleTaskPriorityChange: (id, priority) => set((state) => ({
+        tasks: state.tasks.map(task =>
+            task.id === id ? { ...task, priority, updatedAt: new Date() } : task
+        )
+    })),
+
+    handleTaskTitleChange: (id, title) => set((state) => ({
+        tasks: state.tasks.map(task =>
+            task.id === id ? { ...task, title, updatedAt: new Date() } : task
+        )
+    })),
+
+    handleTaskDescriptionChange: (id, description) => set((state) => ({
+        tasks: state.tasks.map(task =>
+            task.id === id ? { ...task, description, updatedAt: new Date() } : task
+        )
+    })),
+
+    handleTaskDateChange: (id, date) => set((state) => ({
+        tasks: state.tasks.map(task =>
+            task.id === id ? { ...task, dueDate: date, updatedAt: new Date() } : task
+        )
+    })),
+
+    // Task handlers
+    handleCreateTask: (e) => {
+        e.preventDefault();
+        set((state) => {
+            const newTask: TaskProps = {
+                ...state.task,
+                id: uuidv4(),
+                updatedAt: new Date(),
+            };
+            return {
+                tasks: [...state.tasks, newTask],
+                task: initialTaskState,
+                isTaskModalOpen: false
+            };
+        });
+    },
+
+    handleCancelTask: () => set(() => ({
+        task: initialTaskState,
+        isTaskModalOpen: false
+    })),
+
+    // Submit task handler
+    handleSubmitTask: () => set((state) => {
         const newTask: TaskProps = {
             ...state.task,
             id: uuidv4(),
@@ -67,30 +134,27 @@ export const useTaskStore = create<TaskStoreProps>((set) => ({
         };
         return {
             tasks: [...state.tasks, newTask],
-            task: initialTaskState
+            task: initialTaskState,
+            isTaskModalOpen: false
         };
     }),
 
-    // Handle cancel - reset form to initial state
-    handleCancelTask: () => set(() => ({
-        task: initialTaskState
-    })),
+    // Modal handlers
+    openTaskModal: () => set({ isTaskModalOpen: true }),
+    closeTaskModal: () => set({ isTaskModalOpen: false }),
 
-    // Handle adding a new task
+    // Task operations
     addTask: (newTask) => set((state) => ({
         tasks: [...state.tasks, newTask]
     })),
 
-    // Handle updating a task
     updateTask: (id, updates) => set((state) => ({
         tasks: state.tasks.map(task =>
             task.id === id ? { ...task, ...updates } : task
         )
     })),
 
-    // Handle deleting a task
     deleteTask: (id) => set((state) => ({
         tasks: state.tasks.filter(task => task.id !== id)
-    })),
+    }))
 }))
-
