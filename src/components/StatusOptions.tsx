@@ -12,6 +12,7 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover"
 import { STATUS_OPTIONS, StatusProps, StatusOptionsProps } from "../../types/types";
+import { STATUS_BADGE_COLORS } from "../../types/types";
 
 const StatusOptions: React.FC<StatusOptionsProps> = ({ currentStatus, onStatusChange }) => {
     return (
@@ -26,7 +27,9 @@ const StatusOptions: React.FC<StatusOptionsProps> = ({ currentStatus, onStatusCh
                 >
                     <HamburgerMenuIcon className="h-4 w-4" />
                     {currentStatus ? (
-                        <Badge variant="default" className="py-1">{currentStatus}</Badge>
+                        <Badge variant="default" className={STATUS_BADGE_COLORS[currentStatus as keyof typeof STATUS_BADGE_COLORS]}>
+                            {currentStatus}
+                        </Badge>
                     ) : (
                         <span>Status</span>
                     )}
@@ -41,7 +44,9 @@ const StatusOptions: React.FC<StatusOptionsProps> = ({ currentStatus, onStatusCh
                             className="justify-start"
                             onClick={() => onStatusChange(statusOption as StatusProps)}
                         >
-                            <Badge variant="secondary" className="py-1">{statusOption}</Badge>
+                            <Badge variant="secondary" className={STATUS_BADGE_COLORS[statusOption as keyof typeof STATUS_BADGE_COLORS]}>
+                                {statusOption}
+                            </Badge>
                         </Button>
                     ))}
                 </div>
