@@ -42,6 +42,9 @@ const TaskView: React.FC = () => {
                 {/* Task Creation Modal */}
                 <Dialog open={isTaskModalOpen} onOpenChange={closeTaskModal}>
                     <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Create New Task</DialogTitle>
+                        </DialogHeader>
                         <TaskForm />
                     </DialogContent>
                 </Dialog>
@@ -65,10 +68,24 @@ const TaskView: React.FC = () => {
                                         <DialogTrigger asChild>
                                             {/* Preview card that opens the dialog */}
                                             <div className="p-4 bg-white dark:bg-zinc-800 rounded-lg shadow cursor-pointer hover:shadow-md transition-shadow">
-                                                <h3 className="font-medium">{task.title}</h3>
+                                                <h3 className="font-medium mb-2">{task.title}</h3>
+                                                <div className="flex flex-col gap-2">
+                                                    <Badge variant="outline" className="px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 w-fit">
+                                                        Priority: {task.priority}
+                                                    </Badge>
+                                                    <Badge variant="outline" className="px-2 py-1 bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 w-fit">
+                                                        Due: {task.dueDate?.toLocaleDateString()}
+                                                    </Badge>
+                                                    <Badge variant="outline" className="px-2 py-1 bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 w-fit">
+                                                        Created: {task.createdAt.toLocaleDateString()}
+                                                    </Badge>
+                                                </div>
                                             </div>
                                         </DialogTrigger>
-                                        <DialogContent>
+                                        <DialogContent className="sm:max-w-2xl">
+                                            <DialogHeader>
+                                                <DialogTitle>Edit Task</DialogTitle>
+                                            </DialogHeader>
                                             <TaskCard
                                                 task={task}
                                                 onStatusChange={(status) =>
