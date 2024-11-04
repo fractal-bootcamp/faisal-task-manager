@@ -1,6 +1,7 @@
 import { create } from "zustand"
 import { v4 as uuidv4 } from 'uuid';
 import { PriorityProps, StatusProps, TaskFormProps, TaskProps } from "../types/types"
+import { sampleTasks } from "../src/db/db";
 
 interface TaskStoreProps {
     tasks: TaskProps[];
@@ -47,7 +48,7 @@ const initialTaskState: TaskFormProps = {
 }
 
 export const useTaskStore = create<TaskStoreProps>((set) => ({
-    tasks: [],
+    tasks: sampleTasks,
     task: initialTaskState,
     isTaskModalOpen: false,
 

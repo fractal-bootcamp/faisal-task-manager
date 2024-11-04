@@ -43,7 +43,7 @@ const TaskView: React.FC = () => {
                 <Dialog open={isTaskModalOpen} onOpenChange={closeTaskModal}>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Create New Task</DialogTitle>
+                            <DialogTitle className="ml-10 text-gray-600">Create New Task</DialogTitle>
                         </DialogHeader>
                         <TaskForm />
                     </DialogContent>
@@ -84,7 +84,7 @@ const TaskView: React.FC = () => {
                                         </DialogTrigger>
                                         <DialogContent className="sm:max-w-2xl">
                                             <DialogHeader>
-                                                <DialogTitle>Edit Task</DialogTitle>
+                                                <DialogTitle className="text-gray-600">Edit Task</DialogTitle>
                                             </DialogHeader>
                                             <TaskCard
                                                 task={task}
