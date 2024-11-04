@@ -1,10 +1,11 @@
 import TaskForm from "@/components/TaskForm";
-import { PriorityProps, StatusProps } from "../../types/types";
 
-export default function Home() {
+const Home: React.FC = () => {
   return (
     <div>
       <TaskForm />
     </div>
   );
 }
+
+export default Home;

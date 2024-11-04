@@ -11,12 +11,9 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
-import { STATUS_OPTIONS, StatusProps } from "../../types/types";
-import { useTaskStore } from "../../store/taskStore"
+import { STATUS_OPTIONS, StatusProps, StatusOptionsProps } from "../../types/types";
 
-export function StatusOptions() {
-    const { task, handleStatusChange } = useTaskStore();
-
+const StatusOptions: React.FC<StatusOptionsProps> = ({ currentStatus, onStatusChange }) => {
     return (
         <Popover>
             <PopoverTrigger asChild>
@@ -24,12 +21,12 @@ export function StatusOptions() {
                     variant={"outline"}
                     className={cn(
                         "w-[200px] justify-start text-left font-normal",
-                        !task.status && "text-muted-foreground"
+                        !currentStatus && "text-muted-foreground"
                     )}
                 >
                     <HamburgerMenuIcon className="h-4 w-4" />
-                    {task.status ? (
-                        <Badge variant="default" className="py-1">{task.status}</Badge>
+                    {currentStatus ? (
+                        <Badge variant="default" className="py-1">{currentStatus}</Badge>
                     ) : (
                         <span>Status</span>
                     )}
@@ -42,7 +39,7 @@ export function StatusOptions() {
                             key={statusOption}
                             variant="ghost"
                             className="justify-start"
-                            onClick={() => handleStatusChange(statusOption as StatusProps)}
+                            onClick={() => onStatusChange(statusOption as StatusProps)}
                         >
                             <Badge variant="secondary" className="py-1">{statusOption}</Badge>
                         </Button>
@@ -51,4 +48,6 @@ export function StatusOptions() {
             </PopoverContent>
         </Popover>
     )
-} 
+}
+
+export default StatusOptions;

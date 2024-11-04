@@ -1,13 +1,23 @@
 "use client"
 
 import { Button } from "./ui/button";
-import { DatePickerWithPresets } from "./DatePickerWithPresets";
-import { StatusOptions } from "./StatusOptions";
-import { PriorityOptions } from "./PriorityOptions";
+import DatePickerWithPresets from "./DatePickerWithPresets";
+import StatusOptions from "./StatusOptions";
+import PriorityOptions from "./PriorityOptions";
 import { useTaskStore } from "../../store/taskStore";
 
+// Component for creating/editing tasks with form fields for title, description, due date, status and priority
 const TaskForm: React.FC = () => {
-    const { task, handleTitleChange, handleDescriptionChange, handleCreateTask, handleCancelTask } = useTaskStore();
+    const { task,
+        handleTitleChange,
+        handleDescriptionChange,
+        handleDateChange,
+        handleStatusChange,
+        handlePriorityChange,
+        handleCreateTask,
+        handleCancelTask,
+    } = useTaskStore();
+
     return (
         <form className="max-w-3xl mx-auto p-6 space-y-8">
             {/* Header section */}
@@ -27,17 +37,26 @@ const TaskForm: React.FC = () => {
             <div className="flex flex-row justify-center gap-4 items-start">
                 {/* Due date field with preset options */}
                 <div>
-                    <DatePickerWithPresets />
+                    <DatePickerWithPresets
+                        currentDate={task.dueDate}
+                        onDateChange={(date) => handleDateChange(date)}
+                    />
                 </div>
 
                 {/* Status selection */}
                 <div>
-                    <StatusOptions />
+                    <StatusOptions
+                        currentStatus={task.status}
+                        onStatusChange={(status) => handleStatusChange(status)}
+                    />
                 </div>
 
                 {/* Priority selection */}
                 <div>
-                    <PriorityOptions />
+                    <PriorityOptions
+                        currentPriority={task.priority}
+                        onPriorityChange={(priority) => handlePriorityChange(priority)}
+                    />
                 </div>
             </div>
 

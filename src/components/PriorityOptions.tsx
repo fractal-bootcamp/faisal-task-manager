@@ -15,7 +15,7 @@ import {
 import { PRIORITY_OPTIONS, PriorityProps } from "../../types/types";
 import { useTaskStore } from "../../store/taskStore"
 
-export function PriorityOptions() {
+const PriorityOptions: React.FC = () => {
     const { task, handlePriorityChange } = useTaskStore();
 
     return (
@@ -52,4 +52,6 @@ export function PriorityOptions() {
             </PopoverContent>
         </Popover>
     )
-} 
+}
+
+export default PriorityOptions;
