@@ -57,6 +57,21 @@ interface TaskStoreProps {
 
     // Modify delete dialog handlers
     handleDeleteButtonClick: (e: React.MouseEvent, taskId: string) => void;
+
+    // Add new props for sorting and filtering
+    sortField: keyof TaskProps;
+    sortDirection: 'asc' | 'desc';
+    filterStatus: StatusProps | null;
+    filterPriority: PriorityProps | null;
+
+    // Add new handlers
+    setSortField: (field: keyof TaskProps) => void;
+    setSortDirection: (direction: 'asc' | 'desc') => void;
+    setFilterStatus: (status: StatusProps | null) => void;
+    setFilterPriority: (priority: PriorityProps | null) => void;
+
+    // Add computed tasks getter
+    getSortedAndFilteredTasks: () => TaskProps[];
 }
 
 // Initial state for the task form
@@ -69,7 +84,7 @@ const initialTaskState: TaskFormProps = {
     createdAt: new Date(),
 }
 
-export const useTaskStore = create<TaskStoreProps>((set) => ({
+export const useTaskStore = create<TaskStoreProps>((set, get) => ({
     tasks: sampleTasks,
     task: initialTaskState,
     isTaskModalOpen: false,
@@ -260,6 +275,44 @@ export const useTaskStore = create<TaskStoreProps>((set) => ({
         set({
             taskToDelete: taskId,
             isDeleteDialogOpen: true
+        });
+    },
+
+    // Add new state
+    sortField: 'dueDate',
+    sortDirection: 'desc',
+    filterStatus: null,
+    filterPriority: null,
+
+    // Add new handlers
+    setSortField: (field) => set({ sortField: field }),
+    setSortDirection: (direction) => set({ sortDirection: direction }),
+    setFilterStatus: (status) => set({ filterStatus: status }),
+    setFilterPriority: (priority) => set({ filterPriority: priority }),
+
+    // Add computed tasks getter
+    getSortedAndFilteredTasks: () => {
+        const state = get();
+        let filteredTasks = [...state.tasks];
+
+        // Apply filters
+        if (state.filterStatus) {
+            filteredTasks = filteredTasks.filter(task => task.status === state.filterStatus);
+        }
+
+        if (state.filterPriority) {
+            filteredTasks = filteredTasks.filter(task => task.priority === state.filterPriority);
+        }
+
+        // Apply sorting
+        return filteredTasks.sort((a, b) => {
+            const aValue = a[state.sortField];
+            const bValue = b[state.sortField];
+
+            if (!aValue || !bValue) return 0;
+
+            const comparison = aValue > bValue ? 1 : -1;
+            return state.sortDirection === 'asc' ? comparison : -comparison;
         });
     },
 }))
