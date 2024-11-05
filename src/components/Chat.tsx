@@ -1,6 +1,6 @@
 import { useChatStore } from '../../store/chatStore';
 import { Button } from './ui/button';
-import { Input } from './ui/input';
+import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
 import { cn } from '@/lib/utils';
 
@@ -10,22 +10,16 @@ export const Chat = () => {
     inputValue,
     isLoading,
     sendMessage,
-    setInputValue
+    handleInputChange
   } = useChatStore();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inputValue.trim()) return;
-    await sendMessage(inputValue.trim());
-  };
-
   return (
-    <div className="flex flex-col h-full border-l">
+    <div className="fixed right-4 top-24 flex flex-col h-[calc(100vh-8rem)] w-[350px] border rounded-lg shadow-lg bg-background">
       <div className="p-4 border-b">
         <h2 className="text-lg font-semibold">AI Copilot</h2>
       </div>
 
-      <ScrollArea className="flex-1 p-4">
+      <ScrollArea className="flex-1 p-4 h-[calc(100vh-16rem)]">
         <div className="space-y-4">
           {messages.map((message) => (
             <div
@@ -43,15 +37,17 @@ export const Chat = () => {
         </div>
       </ScrollArea>
 
-      <form onSubmit={handleSubmit} className="p-4 border-t">
-        <div className="flex gap-2">
-          <Input
+      <form onSubmit={sendMessage} className="p-4 border-t mt-auto">
+        <div className="flex flex-col gap-2">
+          <Textarea
             value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Type a message..."
+            onChange={handleInputChange}
+            placeholder="Create a task with Copilot..."
             disabled={isLoading}
+            className="min-h-[80px] resize-none"
+            rows={3}
           />
-          <Button type="submit" disabled={isLoading}>
+          <Button type="submit" disabled={isLoading} className="w-full">
             Send
           </Button>
         </div>

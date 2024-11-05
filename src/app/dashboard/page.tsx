@@ -11,7 +11,7 @@ const Dashboard = () => {
         <div className="container mx-auto py-6">
             <h1 className="text-3xl font-bold mb-6 px-6">Dashboard</h1>
             <div className="flex">
-                <div className="flex-1">
+                <div className="flex-1 pr-[300px]">
                     <Tabs defaultValue="taskboard" className="w-full">
                         {/* Tab triggers */}
                         <div className="flex justify-between items-center px-6">
@@ -30,9 +30,7 @@ const Dashboard = () => {
                         </TabsContent>
                     </Tabs>
                 </div>
-                <div className="w-96">
-                    <Chat />
-                </div>
+                <Chat />
             </div>
         </div>
     )
