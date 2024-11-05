@@ -2,7 +2,7 @@
 
 import { useTaskStore } from "../../../store/taskStore";
 import TaskCard from "@/components/TaskCard";
-import { STATUS_OPTIONS } from "../../../types/types";
+import { STATUS_OPTIONS, StatusProps } from "../../../types/types";
 import { Badge } from "@/components/ui/badge";
 import { STATUS_BADGE_COLORS } from "../../../types/types";
 import { cn } from "@/lib/utils";
@@ -26,6 +26,11 @@ const TaskView: React.FC = () => {
         setSelectedTask,
         handleCancelTaskEdit
     } = useTaskStore();
+
+    // Helper function to get task count for a specific status
+    const getTaskCount = (status: StatusProps): number => {
+        return tasks.filter(task => task.status === status).length;
+    };
 
     return (
         <div className="p-6">
@@ -58,12 +63,19 @@ const TaskView: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {Object.values(STATUS_OPTIONS).map((status) => (
                     <div key={status} className="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-lg">
-                        <h2 className="font-semibold mb-4 flex items-center">
-                            <Badge className={cn(STATUS_BADGE_COLORS[status], "text-lg")}>
-                                {status}
-                            </Badge>
+                        {/* Header showing status and count with justify-between */}
+                        <h2 className="font-semibold mb-4">
+                            <div className="flex items-center justify-between">
+                                <Badge className={cn(STATUS_BADGE_COLORS[status], "text-lg")}>
+                                    {status}
+                                </Badge>
+                                <span className="text-gray-600 dark:text-gray-400 mr-2">
+                                    {getTaskCount(status as StatusProps)}
+                                </span>
+                            </div>
                         </h2>
-                        <div className="space-y-4">
+                        {/* Task list container with dynamic height based on content */}
+                        <div className="space-y-4 min-h-[200px]">
                             {tasks
                                 .filter(task => task.status === status)
                                 .map(task => (
