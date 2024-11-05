@@ -105,4 +105,20 @@ export const PRIORITY_BADGE_COLORS = {
     [PriorityProps.HIGH]: 'bg-red-200 text-red-800 dark:bg-red-900 dark:text-red-200'
 } as const;
 
+// Chat message types
+export interface ChatMessage {
+    id: string;
+    role: 'user' | 'Copilot';
+    content: string;
+    timestamp: Date;
+}
+
+export interface TaskCreationSchema {
+    title: string;
+    description: string;
+    status: StatusProps;
+    priority: PriorityProps;
+    dueDate: Date | null;
+}
+
 
