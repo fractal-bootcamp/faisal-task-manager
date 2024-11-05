@@ -27,7 +27,7 @@ const AllTasksView = () => {
             <div className="border rounded-lg">
                 {/* Table Header */}
                 <div className="grid grid-cols-6 gap-4 p-4 bg-zinc-50 dark:bg-zinc-900 border-b">
-                    <div className="font-semibold">Name</div>
+                    <div className="font-semibold">Task</div>
                     <div className="font-semibold">Created</div>
                     <div className="font-semibold">Due Date</div>
                     <div className="font-semibold">Status</div>

@@ -1,11 +1,5 @@
-import TaskForm from "@/components/TaskForm";
+import { redirect } from "next/navigation"
 
-const Home: React.FC = () => {
-  return (
-    <div>
-      <TaskForm />
-    </div>
-  );
+export default function Home() {
+  redirect("/dashboard")
 }
-
-export default Home;
