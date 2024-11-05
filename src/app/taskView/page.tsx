@@ -7,8 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { STATUS_BADGE_COLORS } from "../../../types/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import TaskForm from "@/components/TaskForm";
+import { Trash } from "lucide-react";
 
 const TaskView: React.FC = () => {
     const {
@@ -24,7 +25,12 @@ const TaskView: React.FC = () => {
         isTaskEditModalOpen,
         selectedTask,
         setSelectedTask,
-        handleCancelTaskEdit
+        handleCancelTaskEdit,
+        taskToDelete,
+        handleDeleteButtonClick,
+        isDeleteDialogOpen,
+        closeDeleteDialog,
+        handleDeleteConfirm,
     } = useTaskStore();
 
     // Helper function to get task count for a specific status
@@ -59,6 +65,41 @@ const TaskView: React.FC = () => {
                 </Dialog>
             </div>
 
+            {/* Standalone Delete Dialog */}
+            <Dialog
+                open={isDeleteDialogOpen}
+                onOpenChange={(open) => {
+                    if (!open) closeDeleteDialog();
+                }}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="mb-2">Delete Task</DialogTitle>
+                        <DialogDescription className="text-md">
+                            Are you sure you want to delete this task? This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="flex justify-end space-x-2">
+                        <Button
+                            variant="outline"
+                            onClick={closeDeleteDialog}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={() => {
+                                if (taskToDelete) {
+                                    handleDeleteConfirm(taskToDelete);
+                                }
+                            }}
+                        >
+                            Delete
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             {/* Task Board Grid */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {Object.values(STATUS_OPTIONS).map((status) => (
@@ -79,7 +120,6 @@ const TaskView: React.FC = () => {
                             {tasks
                                 .filter(task => task.status === status)
                                 .map(task => (
-                                    // Using Dialog component to show TaskCard in a modal
                                     <Dialog
                                         key={task.id}
                                         open={isTaskEditModalOpen && selectedTask?.id === task.id}
@@ -92,9 +132,20 @@ const TaskView: React.FC = () => {
                                         }}
                                     >
                                         <DialogTrigger asChild>
-                                            {/* Preview card that opens the dialog */}
                                             <div className="p-4 bg-white dark:bg-zinc-800 rounded-lg shadow cursor-pointer hover:shadow-md transition-shadow">
-                                                <h3 className="font-medium mb-2 text-xl">{task.title}</h3>
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <h3 className="font-medium text-xl">
+                                                        {task.title}
+                                                    </h3>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-gray-500 hover:text-red-500"
+                                                        onClick={(e) => handleDeleteButtonClick(e, task.id)}
+                                                    >
+                                                        <Trash className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
                                                 <div className="flex flex-col gap-2">
                                                     <Badge variant="outline" className="px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 w-fit">
                                                         Priority: {task.priority}
