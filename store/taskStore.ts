@@ -44,6 +44,19 @@ interface TaskStoreProps {
 
     // Task handlers
     setSelectedTask: (task: TaskProps | null) => void;
+
+    // State and handlers for delete dialog
+    isDeleteDialogOpen: boolean;
+    openDeleteDialog: () => void;
+    closeDeleteDialog: () => void;
+    handleDeleteConfirm: (id: string) => void;
+
+    // Add taskToDelete state and its handler
+    taskToDelete: string | null;
+    setTaskToDelete: (id: string | null) => void;
+
+    // Modify delete dialog handlers
+    handleDeleteButtonClick: (e: React.MouseEvent, taskId: string) => void;
 }
 
 // Initial state for the task form
@@ -212,5 +225,41 @@ export const useTaskStore = create<TaskStoreProps>((set) => ({
         selectedTask: task,
         task: task || initialTaskState,
         isTaskEditModalOpen: !!task
-    }))
+    })),
+
+    // Add new state and handlers for delete dialog
+    isDeleteDialogOpen: false,
+
+    // Add new handlers for delete dialog
+    openDeleteDialog: () => set({ isDeleteDialogOpen: true }),
+
+    closeDeleteDialog: () => set({
+        isDeleteDialogOpen: false,
+        taskToDelete: null
+    }),
+
+    handleDeleteConfirm: (id) => set((state) => {
+        // Delete the task and close the dialog
+        const updatedTasks = state.tasks.filter(task => task.id !== id);
+        return {
+            tasks: updatedTasks,
+            isDeleteDialogOpen: false,
+            taskToDelete: null
+        };
+    }),
+
+    // Add taskToDelete state and its handler
+    taskToDelete: null,
+
+    // Setter for taskToDelete
+    setTaskToDelete: (id) => set({ taskToDelete: id }),
+
+    // Modify delete handlers to include taskToDelete management
+    handleDeleteButtonClick: (e, taskId) => {
+        e.stopPropagation(); // Prevent edit dialog from opening
+        set({
+            taskToDelete: taskId,
+            isDeleteDialogOpen: true
+        });
+    },
 }))

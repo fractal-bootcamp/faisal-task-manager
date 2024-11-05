@@ -6,6 +6,16 @@ import StatusOptions from "./StatusOptions";
 import PriorityOptions from "./PriorityOptions";
 import { useTaskStore } from "../../store/taskStore";
 import { TaskCardProps } from "../../types/types";
+import { Trash } from "lucide-react";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "./ui/dialog";
 
 // Component for creating/editing tasks with form fields for title, description, due date, status and priority
 const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
@@ -16,7 +26,11 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
         handleTaskDescriptionChange,
         handleTaskDateChange,
         handleUpdateTask,
-        handleCancelTaskEdit
+        handleCancelTaskEdit,
+        isDeleteDialogOpen,
+        openDeleteDialog,
+        closeDeleteDialog,
+        handleDeleteConfirm
     } = useTaskStore();
 
     return (
@@ -76,19 +90,59 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
                     />
                 </div>
 
-                {/* Form actions */}
-                <div className="flex justify-end space-x-3 pt-4">
-                    <Button
-                        variant="outline"
-                        type="button"
-                        onClick={handleCancelTaskEdit}
-                        className="font-semibold"
-                    >
-                        Cancel
-                    </Button>
-                    <Button type="submit" className="font-semibold">
-                        Update Task
-                    </Button>
+                {/* Form actions with delete button on the left and other actions on the right */}
+                <div className="flex justify-between items-center pt-4">
+                    {/* Delete button with confirmation dialog */}
+                    <Dialog open={isDeleteDialogOpen} onOpenChange={openDeleteDialog}>
+                        <DialogTrigger asChild>
+                            <Button
+                                variant="destructive"
+                                type="button"
+                                className="font-semibold"
+                            >
+                                <Trash className="h-4 w-4" />
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle className="mb-2">
+                                    Delete Task
+                                </DialogTitle>
+                                <DialogDescription className="text-md">
+                                    Are you sure you want to delete this task? This action cannot be undone.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter className="flex justify-end space-x-2">
+                                <Button
+                                    variant="outline"
+                                    onClick={closeDeleteDialog}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    variant="destructive"
+                                    onClick={() => handleDeleteConfirm(task.id)}
+                                >
+                                    Delete
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    {/* Other action buttons */}
+                    <div className="flex space-x-3">
+                        <Button
+                            variant="outline"
+                            type="button"
+                            onClick={handleCancelTaskEdit}
+                            className="font-semibold"
+                        >
+                            Cancel
+                        </Button>
+                        <Button type="submit" className="font-semibold">
+                            Update Task
+                        </Button>
+                    </div>
                 </div>
             </div>
         </form>
