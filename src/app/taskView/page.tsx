@@ -45,7 +45,7 @@ const TaskView: React.FC = () => {
                 <h1 className="text-2xl font-bold">Task Board</h1>
                 <Button
                     variant="secondary"
-                    className="text-lg font-semibold px-4 py-6"
+                    className="text-lg font-semibold px-4 py-6 "
                     onClick={openTaskModal}
                 >
                     New Task
