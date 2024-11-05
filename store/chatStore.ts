@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { v4 as uuidv4 } from 'uuid';
 import { ChatMessage } from "../types/types";
-import { useTaskStore } from "./taskStore";
 
 interface ChatStoreProps {
     messages: ChatMessage[];
@@ -9,9 +8,10 @@ interface ChatStoreProps {
     inputValue: string;
 
     // Chat actions
-    sendMessage: (content: string) => Promise<void>;
+    sendMessage: (e: React.FormEvent) => Promise<void>;
     setInputValue: (value: string) => void;
     clearMessages: () => void;
+    handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
 }
 
 export const useChatStore = create<ChatStoreProps>((set, get) => ({
@@ -19,20 +19,28 @@ export const useChatStore = create<ChatStoreProps>((set, get) => ({
     isLoading: false,
     inputValue: "",
 
-    sendMessage: async (content: string) => {
+    handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        set({ inputValue: e.target.value });
+    },
+
+    sendMessage: async (e: React.FormEvent) => {
+        e.preventDefault();
+        const currentInput = get().inputValue.trim();
+
+        if (!currentInput) return;
         set({ isLoading: true });
 
         // Add user message
         const userMessage: ChatMessage = {
             id: uuidv4(),
             role: 'user',
-            content,
+            content: currentInput,
             timestamp: new Date(),
         };
 
         set(state => ({
             messages: [...state.messages, userMessage],
-            inputValue: "",
+            inputValue: "", // Clear input after sending
         }));
 
         try {
@@ -40,7 +48,7 @@ export const useChatStore = create<ChatStoreProps>((set, get) => ({
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: content }),
+                body: JSON.stringify({ message: currentInput }),
             });
 
             const data = await response.json();

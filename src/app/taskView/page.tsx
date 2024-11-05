@@ -134,7 +134,7 @@ const TaskView: React.FC = () => {
                                         <DialogTrigger asChild>
                                             <div className="p-4 bg-white dark:bg-zinc-800 rounded-lg shadow cursor-pointer hover:shadow-md transition-shadow">
                                                 <div className="flex justify-between items-start mb-2">
-                                                    <h3 className="font-medium text-xl">
+                                                    <h3 className="font-medium text-lg">
                                                         {task.title}
                                                     </h3>
                                                     <Button
