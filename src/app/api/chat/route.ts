@@ -1,19 +1,20 @@
-import { OpenAI } from 'openai';
+import OpenAI from 'openai';
 import { NextResponse } from 'next/server';
-import { taskCreationSchema } from '../../../../types/schemas';
 import instructor from '@instructor-ai/instructor';
+import { InstructorResponseSchema } from '../../../../types/schemas';
 
 // Initialize OpenAI client with instructor wrapper
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || '',
 });
+
 // Create instructor client with mode configuration
 const openai = instructor({
   client,
-  mode: "FUNCTIONS" // Set mode to FUNCTIONS for function calling support
+  mode: "FUNCTIONS"
 });
 
-export async function POST(req: Request) {
+export const POST = async (req: Request) => {
   if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json(
       { error: 'OpenAI API key not configured' },
@@ -27,11 +28,13 @@ export async function POST(req: Request) {
 
     // Create chat completion with OpenAI using instructor
     const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo-0125",
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
-          content: "You are a helpful task management assistant. Help users create and manage their tasks. When they want to create a task, use the createTask function to structure their request.",
+          content: `You are a helpful task management copilot. Help users create and manage their tasks. 
+                    When they want to create a task, extract the task information and make it fun and interesting.
+                    Always return at least one task, even if the user's message doesn't explicitly mention tasks.`,
         },
         { role: "user", content: message },
       ],
@@ -39,12 +42,12 @@ export async function POST(req: Request) {
         {
           type: "function",
           function: {
-            name: "createTask",
-            description: "Create a new task",
+            name: "extractTasks",
+            description: "Extract or generate tasks from user message",
             parameters: {
               type: "object",
-              properties: taskCreationSchema.shape,
-              required: ["title", "description", "status", "priority"]
+              properties: InstructorResponseSchema.shape,
+              required: ["tasks"]
             },
           },
         },
@@ -52,10 +55,20 @@ export async function POST(req: Request) {
       temperature: 0.7,
     });
 
-    // Return response with message content and function call
+    // Get the AI's response message and any function calls
+    const aiMessage = response.choices[0].message.content;
+    const functionCall = response.choices[0].message.function_call;
+
+    let extractedTasks = [];
+    if (functionCall && functionCall.arguments) {
+      const parsedArgs = JSON.parse(functionCall.arguments);
+      extractedTasks = parsedArgs.tasks;
+    }
+
+    // Return both the AI's message and the extracted tasks
     return NextResponse.json({
-      message: response.choices[0].message.content,
-      function_call: response.choices[0].message.function_call
+      message: aiMessage,
+      tasks: extractedTasks
     });
 
   } catch (error) {

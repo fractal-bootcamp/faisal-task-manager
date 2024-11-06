@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { v4 as uuidv4 } from 'uuid';
 import { ChatMessage } from "../types/types";
+import { ExtractedTask } from "../types/schemas";
 
 interface ChatStoreProps {
     messages: ChatMessage[];
@@ -53,17 +54,28 @@ export const useChatStore = create<ChatStoreProps>((set, get) => ({
 
             const data = await response.json();
 
-            // Add assistant message
+            // Add copilot message with tasks
             const copilotMessage: ChatMessage = {
                 id: uuidv4(),
                 role: 'Copilot',
-                content: data.message,
+                content: data.message || "I'll help you create a task.",
                 timestamp: new Date(),
+                tasks: data.tasks
             };
 
             set(state => ({
                 messages: [...state.messages, copilotMessage],
             }));
+
+            // If tasks were extracted, add them to the task store
+            if (data.tasks && data.tasks.length > 0) {
+                // Assuming you have access to the task store
+                // You'll need to implement this part to add tasks to your task management system
+                data.tasks.forEach((task: ExtractedTask) => {
+                    // Add task to your task store
+                    // taskStore.addTask(task);
+                });
+            }
 
         } catch (error) {
             console.error('Error sending message:', error);
