@@ -28,7 +28,7 @@ export const POST = async (req: Request) => {
 
     // Create chat completion with OpenAI using instructor
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",
