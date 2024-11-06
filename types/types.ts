@@ -1,3 +1,5 @@
+import { ExtractedTask } from "./schemas";
+
 export enum StatusProps {
     EMPTY = "",
     PENDING = "Pending",
@@ -111,6 +113,7 @@ export interface ChatMessage {
     role: 'user' | 'Copilot';
     content: string;
     timestamp: Date;
+    tasks?: ExtractedTask[];
 }
 
 export interface TaskCreationSchema {
