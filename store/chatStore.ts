@@ -10,7 +10,7 @@ interface ChatStoreProps {
     inputValue: string;
 
     // Chat actions
-    sendMessage: (e: React.FormEvent) => Promise<void>;
+    sendMessage: (e: React.FormEvent) => Promise<ChatMessage>;
     setInputValue: (value: string) => void;
     clearMessages: () => void;
     handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
@@ -27,30 +27,15 @@ export const useChatStore = create<ChatStoreProps>((set, get) => ({
 
     sendMessage: async (e: React.FormEvent) => {
         e.preventDefault();
-        const currentInput = get().inputValue.trim();
-
-        if (!currentInput) return;
+        const state = get();
         set({ isLoading: true });
-
-        // Add user message
-        const userMessage: ChatMessage = {
-            id: uuidv4(),
-            role: 'user',
-            content: currentInput,
-            timestamp: new Date(),
-        };
-
-        set(state => ({
-            messages: [...state.messages, userMessage],
-            inputValue: "", // Clear input after sending
-        }));
 
         try {
             // Call your AI endpoint here
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: currentInput }),
+                body: JSON.stringify({ message: state.inputValue }),
             });
 
             const data = await response.json();
@@ -58,7 +43,7 @@ export const useChatStore = create<ChatStoreProps>((set, get) => ({
             console.log(data);
 
             // Add copilot message with tasks
-            const copilotMessage: ChatMessage = {
+            const newMessage: ChatMessage = {
                 id: uuidv4(),
                 role: 'Copilot',
                 content: data.message || "I'll help you create a task.",
@@ -66,8 +51,10 @@ export const useChatStore = create<ChatStoreProps>((set, get) => ({
                 tasks: data.tasks
             };
 
-            set(state => ({
-                messages: [...state.messages, copilotMessage],
+            set((state) => ({
+                messages: [...state.messages, newMessage],
+                inputValue: "",
+                isLoading: false
             }));
 
             // If tasks were extracted, add them to the task store
@@ -87,10 +74,11 @@ export const useChatStore = create<ChatStoreProps>((set, get) => ({
                 });
             }
 
+            return newMessage;
         } catch (error) {
-            console.error('Error sending message:', error);
-        } finally {
+            console.error('Error:', error);
             set({ isLoading: false });
+            throw error;
         }
     },
 

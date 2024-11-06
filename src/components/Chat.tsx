@@ -3,8 +3,10 @@ import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { useToast } from "@/hooks/use-toast";
 
 export const Chat = () => {
+  const { toast } = useToast();
   const {
     messages,
     inputValue,
@@ -12,6 +14,28 @@ export const Chat = () => {
     sendMessage,
     handleInputChange
   } = useChatStore();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await sendMessage(e);
+      console.log('Chat response:', response); // Debug log
+
+      if (response?.tasks && response.tasks.length > 0) {
+        toast({
+          title: "Task created successfully",
+          description: `Created ${response.tasks.length} task(s) from your message.`,
+        });
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create task. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="fixed right-4 top-24 flex flex-col h-[calc(100vh-8rem)] w-[350px] border rounded-lg shadow-lg bg-background">
@@ -49,7 +73,7 @@ export const Chat = () => {
         </div>
       </ScrollArea>
 
-      <form onSubmit={sendMessage} className="p-4 border-t mt-auto">
+      <form onSubmit={handleSubmit} className="p-4 border-t mt-auto">
         <div className="flex flex-col gap-2">
           <Textarea
             value={inputValue}
