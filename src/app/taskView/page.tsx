@@ -10,8 +10,11 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import TaskForm from "@/components/TaskForm";
 import { Trash } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 
 const TaskView: React.FC = () => {
+    const { toast } = useToast();
     const {
         tasks,
         isTaskModalOpen,
@@ -31,11 +34,38 @@ const TaskView: React.FC = () => {
         isDeleteDialogOpen,
         closeDeleteDialog,
         handleDeleteConfirm,
+        handleDeleteWithToast,
+        addTask,
     } = useTaskStore();
 
     // Helper function to get task count for a specific status
     const getTaskCount = (status: StatusProps): number => {
         return tasks.filter(task => task.status === status).length;
+    };
+
+    const handleDelete = () => {
+        if (!taskToDelete) return;
+
+        const deletedTask = handleDeleteWithToast(taskToDelete);
+        if (!deletedTask) return;
+
+        toast({
+            title: "Task deleted",
+            description: `"${deletedTask.title}" has been deleted.`,
+            action: (
+                <ToastAction
+                    altText="Undo"
+                    onClick={() => {
+                        addTask(deletedTask);
+                        toast({
+                            description: "Task deletion undone.",
+                        });
+                    }}
+                >
+                    Undo
+                </ToastAction>
+            ),
+        });
     };
 
     return (
@@ -88,11 +118,7 @@ const TaskView: React.FC = () => {
                         </Button>
                         <Button
                             variant="destructive"
-                            onClick={() => {
-                                if (taskToDelete) {
-                                    handleDeleteConfirm(taskToDelete);
-                                }
-                            }}
+                            onClick={handleDelete}
                         >
                             Delete
                         </Button>

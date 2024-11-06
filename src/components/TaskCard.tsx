@@ -7,6 +7,8 @@ import PriorityOptions from "./PriorityOptions";
 import { useTaskStore } from "../../store/taskStore";
 import { TaskCardProps } from "../../types/types";
 import { Trash } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "./ui/toast";
 import {
     Dialog,
     DialogContent,
@@ -19,6 +21,7 @@ import {
 
 // Component for creating/editing tasks with form fields for title, description, due date, status and priority
 const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
+    const { toast } = useToast();
     const {
         handleTaskStatusChange,
         handleTaskPriorityChange,
@@ -30,11 +33,48 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
         isDeleteDialogOpen,
         openDeleteDialog,
         closeDeleteDialog,
-        handleDeleteConfirm
+        handleDeleteConfirm,
+        addTask
     } = useTaskStore();
 
+    // Wrap the update handler to include toast
+    const handleUpdate = (e: React.FormEvent) => {
+        e.preventDefault();
+        handleUpdateTask(e, task.id);
+
+        toast({
+            title: "Task updated successfully",
+            description: `"${task.title}" has been updated.`,
+        });
+    };
+
+    // Wrap the delete confirmation to include toast
+    const handleDeleteWithToast = (taskId: string) => {
+        const taskCopy = { ...task }; // Store task copy for potential undo
+        handleDeleteConfirm(taskId);
+        closeDeleteDialog();
+
+        toast({
+            title: "Task deleted",
+            description: `"${taskCopy.title}" has been deleted.`,
+            action: (
+                <ToastAction
+                    altText="Undo"
+                    onClick={() => {
+                        addTask(taskCopy);
+                        toast({
+                            description: "Task deletion undone.",
+                        });
+                    }}
+                >
+                    Undo
+                </ToastAction>
+            ),
+        });
+    };
+
     return (
-        <form onSubmit={(e) => handleUpdateTask(e, task.id)} className="w-full space-y-8">
+        <form onSubmit={handleUpdate} className="w-full space-y-8">
             {/* Header section */}
             <div className="border-b pb-4">
                 <input
@@ -121,7 +161,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
                                 </Button>
                                 <Button
                                     variant="destructive"
-                                    onClick={() => handleDeleteConfirm(task.id)}
+                                    onClick={() => handleDeleteWithToast(task.id)}
                                 >
                                     Delete
                                 </Button>

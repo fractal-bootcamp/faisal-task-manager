@@ -7,6 +7,8 @@ import { STATUS_BADGE_COLORS, StatusProps, PRIORITY_BADGE_COLORS } from "../../.
 import { Checkbox } from "@/components/ui/checkbox";
 import { Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import {
     Dialog,
     DialogContent,
@@ -17,13 +19,15 @@ import {
 } from "@/components/ui/dialog";
 
 const AllTasksView = () => {
+    const { toast } = useToast();
     const {
         tasks,
         isDeleteDialogOpen,
         taskToDelete,
         handleDeleteButtonClick,
         closeDeleteDialog,
-        handleDeleteConfirm
+        handleDeleteWithToast,
+        addTask
     } = useTaskStore();
 
     // Sort tasks by dueDate
@@ -31,6 +35,31 @@ const AllTasksView = () => {
         if (!a.dueDate || !b.dueDate) return 0;
         return b.dueDate.getTime() - a.dueDate.getTime();
     });
+
+    const handleDelete = () => {
+        if (!taskToDelete) return;
+
+        const deletedTask = handleDeleteWithToast(taskToDelete);
+        if (!deletedTask) return;
+
+        toast({
+            title: "Task deleted",
+            description: `"${deletedTask.title}" has been deleted.`,
+            action: (
+                <ToastAction
+                    altText="Undo"
+                    onClick={() => {
+                        addTask(deletedTask);
+                        toast({
+                            description: "Task deletion undone.",
+                        });
+                    }}
+                >
+                    Undo
+                </ToastAction>
+            ),
+        });
+    };
 
     return (
         <div className="p-6">
@@ -55,7 +84,7 @@ const AllTasksView = () => {
                         </Button>
                         <Button
                             variant="destructive"
-                            onClick={() => taskToDelete && handleDeleteConfirm(taskToDelete)}
+                            onClick={handleDelete}
                         >
                             Delete
                         </Button>

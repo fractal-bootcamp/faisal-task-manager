@@ -25,7 +25,7 @@ interface TaskStoreProps {
     handleTaskDateChange: (id: string, date: Date) => void;
 
     // Task handlers
-    handleCreateTask: (e: React.FormEvent) => void;
+    handleCreateTask: (e: React.FormEvent) => string;
     handleCancelTask: () => void;
     handleSubmitTask: () => void;
 
@@ -33,16 +33,16 @@ interface TaskStoreProps {
     openTaskModal: () => void;
     closeTaskModal: () => void;
 
-    // Task operations
+    // Task CRUD operations
     addTask: (task: TaskProps) => void;
     updateTask: (id: string, updates: Partial<TaskProps>) => void;
     deleteTask: (id: string) => void;
 
-    // Update handlers
+    // Task edit handlers
     handleUpdateTask: (e: React.FormEvent, id: string) => void;
     handleCancelTaskEdit: () => void;
 
-    // Task handlers
+    // Selected task management
     setSelectedTask: (task: TaskProps | null) => void;
 
     // State and handlers for delete dialog
@@ -72,6 +72,8 @@ interface TaskStoreProps {
 
     // Add computed tasks getter
     getSortedAndFilteredTasks: () => TaskProps[];
+
+    handleDeleteWithToast: (taskId: string) => TaskProps | undefined;
 }
 
 // Initial state for the task form
@@ -144,20 +146,27 @@ export const useTaskStore = create<TaskStoreProps>((set, get) => ({
     })),
 
     // Task creation and cancellation handlers
-    handleCreateTask: (e) => {
+    handleCreateTask: (e: React.FormEvent) => {
         e.preventDefault();
-        set((state) => {
-            const newTask: TaskProps = {
-                ...state.task,
-                id: uuidv4(),
-                updatedAt: new Date(),
-            };
-            return {
-                tasks: [...state.tasks, newTask],
-                task: initialTaskState,
-                isTaskModalOpen: false
-            };
-        });
+        const state = get();
+        const newTask: TaskProps = {
+            id: uuidv4(),
+            title: state.task.title,
+            description: state.task.description,
+            status: state.task.status,
+            priority: state.task.priority,
+            dueDate: state.task.dueDate,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        };
+
+        set((state) => ({
+            tasks: [...state.tasks, newTask],
+            task: initialTaskState,
+            isTaskModalOpen: false,
+        }));
+
+        return newTask.id; // Return the task ID
     },
 
     handleCancelTask: () => set(() => ({
@@ -184,8 +193,8 @@ export const useTaskStore = create<TaskStoreProps>((set, get) => ({
     closeTaskModal: () => set({ isTaskModalOpen: false }),
 
     // Task CRUD operations
-    addTask: (newTask) => set((state) => ({
-        tasks: [...state.tasks, newTask]
+    addTask: (task: TaskProps) => set((state) => ({
+        tasks: [...state.tasks, task]
     })),
 
     updateTask: (id, updates) => set((state) => ({
@@ -314,5 +323,23 @@ export const useTaskStore = create<TaskStoreProps>((set, get) => ({
             const comparison = aValue > bValue ? 1 : -1;
             return state.sortDirection === 'asc' ? comparison : -comparison;
         });
+    },
+
+    handleDeleteWithToast: (taskId: string) => {
+        const state = get();
+        const taskToDelete = state.tasks.find(task => task.id === taskId);
+        if (!taskToDelete) return;
+
+        // Create a deep copy of the task before deletion
+        const taskCopy = { ...taskToDelete };
+
+        // Delete the task
+        set((state) => ({
+            tasks: state.tasks.filter(task => task.id !== taskId),
+            isDeleteDialogOpen: false,
+            taskToDelete: null
+        }));
+
+        return taskCopy; // Return the deleted task copy
     },
 }))
