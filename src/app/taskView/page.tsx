@@ -4,7 +4,7 @@ import { useTaskStore } from "../../../store/taskStore";
 import TaskCard from "@/components/TaskCard";
 import { STATUS_OPTIONS, StatusProps } from "../../../types/types";
 import { Badge } from "@/components/ui/badge";
-import { STATUS_BADGE_COLORS } from "../../../types/types";
+import { STATUS_BADGE_COLORS, PRIORITY_BADGE_COLORS } from "../../../types/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -147,15 +147,26 @@ const TaskView: React.FC = () => {
                                                     </Button>
                                                 </div>
                                                 <div className="flex flex-col gap-2">
-                                                    <Badge variant="outline" className="px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 w-fit">
-                                                        Priority: {task.priority}
-                                                    </Badge>
-                                                    <Badge variant="outline" className="px-2 py-1 bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 w-fit">
-                                                        Due: {task.dueDate?.toLocaleDateString()}
-                                                    </Badge>
-                                                    <Badge variant="outline" className="px-2 py-1 bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 w-fit">
-                                                        Created: {task.createdAt.toLocaleDateString()}
-                                                    </Badge>
+                                                    <div className="flex flex-row justify-between">
+                                                        <span className="text-sm text-gray-600 dark:text-gray-400">Priority:</span>
+                                                        <Badge variant="outline" className={cn(PRIORITY_BADGE_COLORS[task.priority as keyof typeof PRIORITY_BADGE_COLORS])}>
+                                                            {task.priority}
+                                                        </Badge>
+                                                    </div>
+                                                    {task.dueDate && (
+                                                        <div className="flex flex-row justify-between">
+                                                            <span className="text-sm text-gray-600 dark:text-gray-400">Due:</span>
+                                                            <Badge variant="outline" className="px-2 py-1 bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 w-fit">
+                                                                {task.dueDate.toLocaleDateString()}
+                                                            </Badge>
+                                                        </div>
+                                                    )}
+                                                    <div className="flex flex-row justify-between">
+                                                        <span className="text-sm text-gray-600 dark:text-gray-400">Created:</span>
+                                                        <Badge variant="outline" className="px-2 py-1 bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 w-fit">
+                                                            {task.createdAt.toLocaleDateString()}
+                                                        </Badge>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </DialogTrigger>
