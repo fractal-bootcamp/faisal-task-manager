@@ -28,41 +28,58 @@ export const POST = async (req: Request) => {
 
     // Create chat completion with OpenAI using instructor
     const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
-          content: `You are a helpful task management copilot. Help users create and manage their tasks. 
-                    When they want to create a task, extract the task information and make it fun and interesting.
-                    Always return at least one task, even if the user's message doesn't explicitly mention tasks.`,
+          content: `You are a task management assistant. Extract tasks from user messages and format them according to these rules:
+          - Keep titles short and clear (max 7 words)
+          - Keep descriptions brief but informative (max 20 words)
+          - Set appropriate status (PENDING/IN_PROGRESS) and priority (LOW/MEDIUM/HIGH) based on context
+          - If no clear task is mentioned, ask the user what task they'd like to create`,
         },
         { role: "user", content: message },
       ],
-      tools: [
-        {
-          type: "function",
-          function: {
-            name: "extractTasks",
-            description: "Extract or generate tasks from user message",
-            parameters: {
-              type: "object",
-              properties: InstructorResponseSchema.shape,
-              required: ["tasks"]
-            },
+      functions: [{
+        name: "extractTasks",
+        description: "Extract tasks from user message",
+        parameters: {
+          type: "object",
+          properties: {
+            tasks: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  title: { type: "string" },
+                  description: { type: "string" },
+                  status: { type: "string", enum: ["Pending", "In Progress"] },
+                  priority: { type: "string", enum: ["Low", "Medium", "High"] },
+                  dueDate: { type: "string", format: "date-time", nullable: true }
+                },
+                required: ["title", "description", "status", "priority"]
+              }
+            }
           },
-        },
-      ],
+          required: ["tasks"]
+        }
+      }],
+      function_call: { name: "extractTasks" }, // Force function call
       temperature: 0.7,
     });
 
-    // Get the AI's response message and any function calls
-    const aiMessage = response.choices[0].message.content;
+    // Get the AI's response message and extracted tasks
+    const aiMessage = response.choices[0].message.content || "I'll help you create your tasks.";
     const functionCall = response.choices[0].message.function_call;
 
     let extractedTasks = [];
-    if (functionCall && functionCall.arguments) {
-      const parsedArgs = JSON.parse(functionCall.arguments);
-      extractedTasks = parsedArgs.tasks;
+    if (functionCall?.arguments) {
+      try {
+        const parsedArgs = JSON.parse(functionCall.arguments);
+        extractedTasks = parsedArgs.tasks || [];
+      } catch (error) {
+        console.error('Error parsing function arguments:', error);
+      }
     }
 
     // Return both the AI's message and the extracted tasks
