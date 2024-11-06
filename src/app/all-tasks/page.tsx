@@ -97,11 +97,11 @@ const AllTasksView = () => {
                 {/* Table Header */}
                 <div className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_auto_50px] gap-4 p-4 bg-zinc-50 dark:bg-zinc-900 border-b">
                     <div className="font-semibold">Task</div>
-                    <div className="font-semibold">Created</div>
-                    <div className="font-semibold">Due Date</div>
-                    <div className="font-semibold">Status</div>
-                    <div className="font-semibold">Priority</div>
-                    <div className="font-semibold">Done</div>
+                    <div className="font-semibold text-left">Created</div>
+                    <div className="font-semibold text-left">Due Date</div>
+                    <div className="font-semibold text-left">Status</div>
+                    <div className="font-semibold text-left">Priority</div>
+                    <div className="font-semibold text-left">Done</div>
                     <div className="font-semibold"></div>
                 </div>
 
@@ -110,26 +110,26 @@ const AllTasksView = () => {
                     {sortedTasks.map((task) => (
                         <div
                             key={task.id}
-                            className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_auto_50px] gap-4 p-4 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
+                            className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_auto_50px] gap-4 p-4 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors items-center"
                         >
                             <div className="font-medium">{task.title}</div>
-                            <div className="text-gray-600 dark:text-gray-400">
+                            <div className="text-gray-600 dark:text-gray-400 text-left">
                                 {task.createdAt.toLocaleDateString()}
                             </div>
-                            <div className="text-gray-600 dark:text-gray-400">
+                            <div className="text-gray-600 dark:text-gray-400 text-left">
                                 {task.dueDate?.toLocaleDateString() || 'No date'}
                             </div>
-                            <div>
+                            <div className="text-left">
                                 <Badge className={cn(STATUS_BADGE_COLORS[task.status as keyof typeof STATUS_BADGE_COLORS])}>
                                     {task.status}
                                 </Badge>
                             </div>
-                            <div>
+                            <div className="text-left">
                                 <Badge variant="outline" className={cn(PRIORITY_BADGE_COLORS[task.priority as keyof typeof PRIORITY_BADGE_COLORS])}>
                                     {task.priority}
                                 </Badge>
                             </div>
-                            <div>
+                            <div className="text-left">
                                 <Checkbox
                                     checked={task.status === StatusProps.COMPLETED}
                                     className="pointer-events-none"
