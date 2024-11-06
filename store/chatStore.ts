@@ -1,7 +1,8 @@
 import { create } from "zustand";
 import { v4 as uuidv4 } from 'uuid';
-import { ChatMessage } from "../types/types";
+import { ChatMessage, TaskProps } from "../types/types";
 import { ExtractedTask } from "../types/schemas";
+import { useTaskStore } from "./taskStore";
 
 interface ChatStoreProps {
     messages: ChatMessage[];
@@ -54,6 +55,8 @@ export const useChatStore = create<ChatStoreProps>((set, get) => ({
 
             const data = await response.json();
 
+            console.log(data);
+
             // Add copilot message with tasks
             const copilotMessage: ChatMessage = {
                 id: uuidv4(),
@@ -69,11 +72,18 @@ export const useChatStore = create<ChatStoreProps>((set, get) => ({
 
             // If tasks were extracted, add them to the task store
             if (data.tasks && data.tasks.length > 0) {
-                // Assuming you have access to the task store
-                // You'll need to implement this part to add tasks to your task management system
                 data.tasks.forEach((task: ExtractedTask) => {
-                    // Add task to your task store
-                    // taskStore.addTask(task);
+                    const newTask: TaskProps = {
+                        id: uuidv4(),
+                        title: task.title,
+                        description: task.description,
+                        status: task.status,
+                        priority: task.priority,
+                        dueDate: task.dueDate || null,
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                    };
+                    useTaskStore.getState().addTask(newTask);
                 });
             }
 
