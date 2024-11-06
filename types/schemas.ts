@@ -18,8 +18,8 @@ export const taskCreationSchema = z.object({
 export const ExtractedTaskSchema = z.object({
     title: z.string().describe("Make this a short title and describe explicitly what the task is about"),
     description: z.string().describe("Make this a short but detailed description of the task"),
-    status: TaskStatusEnum.describe("Set the status of the task to either PENDING, IN_PROGRESS depending on the context of the message and when the task is due. Ask for clarification if needed."),
-    priority: PriorityEnum.describe("Set the priority of the task to either LOW, MEDIUM, or HIGH depending on the context of the message."),
+    status: TaskStatusEnum.describe("Set the status of the task to either Pending, In Progress depending on the context of the message and when the task is due. Ask for clarification if needed."),
+    priority: PriorityEnum.describe("Set the priority of the task to either Low, Medium, or High depending on the context of the message."),
     dueDate: z.date().nullable().optional(),
 });
 

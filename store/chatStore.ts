@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { v4 as uuidv4 } from 'uuid';
-import { ChatMessage, TaskProps } from "../types/types";
+import { ChatMessage, TaskProps, StatusProps, PriorityProps } from "../types/types";
 import { ExtractedTask } from "../types/schemas";
 import { useTaskStore } from "./taskStore";
 
@@ -77,9 +77,9 @@ export const useChatStore = create<ChatStoreProps>((set, get) => ({
                         id: uuidv4(),
                         title: task.title,
                         description: task.description,
-                        status: task.status,
-                        priority: task.priority,
-                        dueDate: task.dueDate || null,
+                        status: StatusProps[task.status === "Pending" ? "PENDING" : "IN_PROGRESS"],
+                        priority: PriorityProps[task.priority.toUpperCase() as keyof typeof PriorityProps],
+                        dueDate: task.dueDate ? new Date(task.dueDate) : null,
                         createdAt: new Date(),
                         updatedAt: new Date(),
                     };
