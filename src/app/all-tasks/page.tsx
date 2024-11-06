@@ -5,9 +5,26 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { STATUS_BADGE_COLORS, StatusProps, PRIORITY_BADGE_COLORS } from "../../../types/types";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Trash } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 
 const AllTasksView = () => {
-    const { tasks } = useTaskStore();
+    const {
+        tasks,
+        isDeleteDialogOpen,
+        taskToDelete,
+        handleDeleteButtonClick,
+        closeDeleteDialog,
+        handleDeleteConfirm
+    } = useTaskStore();
 
     // Sort tasks by dueDate
     const sortedTasks = [...tasks].sort((a, b) => {
@@ -23,16 +40,40 @@ const AllTasksView = () => {
                 </h1>
             </div>
 
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={isDeleteDialogOpen} onOpenChange={closeDeleteDialog}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete Task</DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete this task? This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={closeDeleteDialog}>
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={() => taskToDelete && handleDeleteConfirm(taskToDelete)}
+                        >
+                            Delete
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             {/* Tasks Table */}
             <div className="border rounded-lg">
                 {/* Table Header */}
-                <div className="grid grid-cols-6 gap-4 p-4 bg-zinc-50 dark:bg-zinc-900 border-b">
+                <div className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_auto_50px] gap-4 p-4 bg-zinc-50 dark:bg-zinc-900 border-b">
                     <div className="font-semibold">Task</div>
                     <div className="font-semibold">Created</div>
                     <div className="font-semibold">Due Date</div>
                     <div className="font-semibold">Status</div>
                     <div className="font-semibold">Priority</div>
                     <div className="font-semibold">Done</div>
+                    <div className="font-semibold"></div>
                 </div>
 
                 {/* Table Body */}
@@ -40,7 +81,7 @@ const AllTasksView = () => {
                     {sortedTasks.map((task) => (
                         <div
                             key={task.id}
-                            className="grid grid-cols-6 gap-4 p-4 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
+                            className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_auto_50px] gap-4 p-4 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
                         >
                             <div className="font-medium">{task.title}</div>
                             <div className="text-gray-600 dark:text-gray-400">
@@ -64,6 +105,16 @@ const AllTasksView = () => {
                                     checked={task.status === StatusProps.COMPLETED}
                                     className="pointer-events-none"
                                 />
+                            </div>
+                            <div className="flex justify-center">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-gray-500 hover:text-red-500"
+                                    onClick={(e) => handleDeleteButtonClick(e, task.id)}
+                                >
+                                    <Trash className="h-4 w-4" />
+                                </Button>
                             </div>
                         </div>
                     ))}
