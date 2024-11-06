@@ -5,10 +5,14 @@ import DatePickerWithPresets from "./DatePickerWithPresets";
 import StatusOptions from "./StatusOptions";
 import PriorityOptions from "./PriorityOptions";
 import { useTaskStore } from "../../store/taskStore";
+import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "./ui/toast";
 
 // Component for creating/editing tasks with form fields for title, description, due date, status and priority
 const TaskForm: React.FC = () => {
-    const { task,
+    const { toast } = useToast();
+    const {
+        task,
         handleTitleChange,
         handleDescriptionChange,
         handleDateChange,
@@ -16,7 +20,45 @@ const TaskForm: React.FC = () => {
         handlePriorityChange,
         handleCreateTask,
         handleCancelTask,
+        deleteTask,
+        closeTaskModal
     } = useTaskStore();
+
+    const handleCreate = (e: React.FormEvent) => {
+        e.preventDefault();
+
+        // Check if status is empty
+        if (!task.status) {
+            toast({
+                title: `❌❌ Status Required ❌❌`,
+                description: "Please select a status for the task.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        const taskId = handleCreateTask(e);
+
+        // Show success toast with undo action
+        toast({
+            title: "Task created successfully",
+            description: `"${task.title}" has been created.`,
+            action: (
+                <ToastAction
+                    altText="Undo"
+                    onClick={() => {
+                        deleteTask(taskId);
+                        closeTaskModal();
+                        toast({
+                            description: "Task creation undone.",
+                        });
+                    }}
+                >
+                    Undo
+                </ToastAction>
+            ),
+        });
+    };
 
     return (
         <form className="max-w-3xl mx-auto p-6 space-y-8">
@@ -43,11 +85,11 @@ const TaskForm: React.FC = () => {
                     />
                 </div>
 
-                {/* Status selection */}
-                <div>
+                {/* Status selection with required indicator */}
+                <div className="space-y-2">
                     <StatusOptions
                         currentStatus={task.status}
-                        onStatusChange={(status) => handleStatusChange(status)}
+                        onStatusChange={handleStatusChange}
                     />
                 </div>
 
@@ -80,12 +122,12 @@ const TaskForm: React.FC = () => {
                     <Button variant="outline" type="button" onClick={handleCancelTask}>
                         Cancel
                     </Button>
-                    <Button type="submit" onClick={handleCreateTask}>
+                    <Button type="submit" onClick={handleCreate}>
                         Create Task
                     </Button>
                 </div>
             </div>
-        </form >
+        </form>
     );
 };
 
