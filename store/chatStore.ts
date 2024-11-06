@@ -53,6 +53,8 @@ export const useChatStore = create<ChatStoreProps>((set, get) => ({
 
             const data = await response.json();
 
+            console.log(data);
+
             // Add copilot message with tasks
             const newMessage: ChatMessage = {
                 id: uuidv4(),
