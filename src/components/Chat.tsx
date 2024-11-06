@@ -15,11 +15,18 @@ export const Chat = () => {
     handleInputChange
   } = useChatStore();
 
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e as unknown as React.FormEvent);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const response = await sendMessage(e);
-      console.log('Chat response:', response); // Debug log
+      console.log('Chat response:', response);
 
       if (response?.tasks && response.tasks.length > 0) {
         toast({
@@ -78,6 +85,7 @@ export const Chat = () => {
           <Textarea
             value={inputValue}
             onChange={handleInputChange}
+            onKeyDown={handleKeyPress}
             placeholder="Create a task with Copilot..."
             disabled={isLoading}
             className="min-h-[80px] resize-none"

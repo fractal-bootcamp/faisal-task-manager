@@ -33,7 +33,6 @@ const TaskView: React.FC = () => {
         handleDeleteButtonClick,
         isDeleteDialogOpen,
         closeDeleteDialog,
-        handleDeleteConfirm,
         handleDeleteWithToast,
         addTask,
     } = useTaskStore();
