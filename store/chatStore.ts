@@ -31,7 +31,20 @@ export const useChatStore = create<ChatStoreProps>((set, get) => ({
         set({ isLoading: true });
 
         try {
-            // Call your AI endpoint here
+            // Add user message first
+            const userMessage: ChatMessage = {
+                id: uuidv4(),
+                role: 'user',
+                content: state.inputValue,
+                timestamp: new Date(),
+            };
+
+            // Update messages with user message
+            set((state) => ({
+                messages: [...state.messages, userMessage]
+            }));
+
+            // Call your AI endpoint
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -39,8 +52,6 @@ export const useChatStore = create<ChatStoreProps>((set, get) => ({
             });
 
             const data = await response.json();
-
-            console.log(data);
 
             // Add copilot message with tasks
             const newMessage: ChatMessage = {
