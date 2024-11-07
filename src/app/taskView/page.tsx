@@ -12,7 +12,7 @@ import TaskForm from "@/components/TaskForm";
 import { Trash } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
-
+import DeleteDialog from "@/components/DeleteDialog";
 const TaskView: React.FC = () => {
     const { toast } = useToast();
     const {
@@ -94,36 +94,12 @@ const TaskView: React.FC = () => {
                 </Dialog>
             </div>
 
-            {/* Standalone Delete Dialog */}
-            <Dialog
-                open={isDeleteDialogOpen}
-                onOpenChange={(open) => {
-                    if (!open) closeDeleteDialog();
-                }}
-            >
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle className="mb-2">Delete Task</DialogTitle>
-                        <DialogDescription className="text-md">
-                            Are you sure you want to delete this task? This action cannot be undone.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter className="flex justify-end space-x-2">
-                        <Button
-                            variant="outline"
-                            onClick={closeDeleteDialog}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            variant="destructive"
-                            onClick={handleDelete}
-                        >
-                            Delete
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            {/* Delete Confirmation Dialog */}
+            <DeleteDialog
+                isOpen={isDeleteDialogOpen}
+                onClose={closeDeleteDialog}
+                onDelete={handleDelete}
+            />
 
             {/* Task Board Grid */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

@@ -124,4 +124,13 @@ export interface TaskCreationSchema {
     dueDate: Date | null;
 }
 
+export interface DeleteDialogProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onDelete: () => void;
+}
 
+export interface TaskListItemProps {
+    task: TaskProps;
+    onDelete: (e: React.MouseEvent, taskId: string) => void;
+}
