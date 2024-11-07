@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { v4 as uuidv4 } from 'uuid';
-import { ChatMessage, TaskProps, StatusProps, PriorityProps } from "../types/types";
+import { ChatMessage, TaskProps, StatusProps, PriorityProps, ChatResponse } from "../types/types";
 import { ExtractedTask } from "../types/schemas";
 import { useTaskStore } from "./taskStore";
 import { ActionType } from "../types/types";
@@ -11,7 +11,7 @@ interface ChatStoreProps {
     inputValue: string;
 
     // Chat actions
-    sendMessage: (e: React.FormEvent) => Promise<ChatMessage>;
+    sendMessage: (e: React.FormEvent) => Promise<ChatResponse>;
     setInputValue: (value: string) => void;
     clearMessages: () => void;
     handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
@@ -32,6 +32,39 @@ export const useChatStore = create<ChatStoreProps>((set, get) => ({
         set({ isLoading: true });
 
         try {
+            // Extract action type and task ID before making the API call
+            const action = detectActionType(state.inputValue);
+            const taskId = extractTaskId(state.inputValue);
+
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: state.inputValue,
+                    action,
+                    taskId
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.action === ActionType.Update && data.taskId && data.updates) {
+                // Call the PUT endpoint
+                const updateResponse = await fetch(`/api/tasks/${data.taskId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data.updates),
+                });
+                const updateResult = await updateResponse.json();
+                data.tasks = updateResult.task ? [updateResult.task] : [];
+            } else if (data.action === ActionType.Delete && data.taskId) {
+                // Call the DELETE endpoint
+                await fetch(`/api/tasks/${data.taskId}`, {
+                    method: 'DELETE',
+                });
+                data.tasks = [];
+            }
+
             // Add user message first
             const userMessage: ChatMessage = {
                 id: uuidv4(),
@@ -44,19 +77,6 @@ export const useChatStore = create<ChatStoreProps>((set, get) => ({
             set((state) => ({
                 messages: [...state.messages, userMessage]
             }));
-
-            // Call your AI endpoint
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    message: state.inputValue,
-                    action: detectActionType(state.inputValue),
-                    taskId: extractTaskId(state.inputValue)
-                }),
-            });
-
-            const data = await response.json();
 
             // Create new message
             const newMessage: ChatMessage = {
@@ -74,16 +94,7 @@ export const useChatStore = create<ChatStoreProps>((set, get) => ({
             }));
 
             // Handle different types of responses
-            if (data.action === ActionType.Update && data.taskId && data.updates) {
-                const taskStore = useTaskStore.getState();
-                await taskStore.updateTask(data.taskId, {
-                    ...data.updates,
-                    updatedAt: new Date()
-                });
-            } else if (data.action === ActionType.Delete && data.taskId) {
-                const taskStore = useTaskStore.getState();
-                await taskStore.handleDeleteWithToast(data.taskId);
-            } else if (data.tasks && data.tasks.length > 0) {
+            if (data.tasks && data.tasks.length > 0) {
                 // Handle task creation (existing logic)
                 data.tasks.forEach((task: ExtractedTask) => {
                     const newTask: TaskProps = {
@@ -129,7 +140,7 @@ export const detectActionType = (message: string): ActionType | null => {
 };
 
 const extractTaskId = (message: string): string | null => {
-    // Match patterns like "task #123" or "ID: 123"
-    const matches = message.match(/(?:task #|ID:?\s*)(\d+)/i);
+    // Match UUID or numeric ID
+    const matches = message.match(/(?:task #|ID:?\s*)([a-zA-Z0-9-]+)/i);
     return matches ? matches[1] : null;
 };
