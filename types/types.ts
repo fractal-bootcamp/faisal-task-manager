@@ -109,4 +109,8 @@ export interface TaskCreationSchema {
     dueDate: Date | null;
 }
 
-
+// Define an enum for action types
+export enum ActionType {
+    Update = 'update',
+    Delete = 'delete',
+}

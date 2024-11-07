@@ -199,7 +199,7 @@ export const useTaskStore = create<TaskStoreProps>((set, get) => ({
 
     updateTask: (id, updates) => set((state) => ({
         tasks: state.tasks.map(task =>
-            task.id === id ? { ...task, ...updates } : task
+            task.id === id ? { ...task, ...updates, updatedAt: new Date() } : task
         )
     })),
 

@@ -1,7 +1,8 @@
 import OpenAI from 'openai';
 import { NextResponse } from 'next/server';
 import instructor from '@instructor-ai/instructor';
-import { InstructorResponseSchema } from '../../../../types/schemas';
+import { useTaskStore } from '../../../../store/taskStore';
+import { ActionType, PriorityProps, StatusProps } from '../../../../types/types';
 
 // Initialize OpenAI client with instructor wrapper
 const client = new OpenAI({
@@ -14,6 +15,38 @@ const openai = instructor({
   mode: "FUNCTIONS"
 });
 
+
+const { updateTask, deleteTask } = useTaskStore.getState();
+
+// Add a function to extract task ID for deletion
+const extractTaskForDeletion = (message: string) => {
+  const idMatch = message.match(/(?:task #|ID:?\s*)(\d+)/i);
+  return idMatch ? idMatch[1] : null;
+};
+
+// Add a function to extract task updates from the message
+const extractTaskUpdates = (message: string) => {
+  // Extract task ID
+  const idMatch = message.match(/(?:task #|ID:?\s*)(\d+)/i);
+  const taskId = idMatch ? (idMatch[1] || idMatch[2]) : null;
+
+  // Extract priority update
+  const priorityMatch = message.match(/priority (?:to |:?\s*)(low|medium|high)/i);
+  const priority = priorityMatch ? priorityMatch[1].toUpperCase() : null;
+
+  // Extract status update
+  const statusMatch = message.match(/status (?:to |:?\s*)(pending|in progress|completed|archived)/i);
+  const status = statusMatch ? statusMatch[1].toUpperCase() : null;
+
+  return {
+    taskId,
+    updates: {
+      ...(priority && { priority: PriorityProps[priority as keyof typeof PriorityProps] }),
+      ...(status && { status: StatusProps[status as keyof typeof StatusProps] }),
+    }
+  };
+};
+
 export const POST = async (req: Request) => {
   if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json(
@@ -23,20 +56,60 @@ export const POST = async (req: Request) => {
   }
 
   try {
-    // Extract message from request body
     const { message } = await req.json();
 
-    // Create chat completion with OpenAI using instructor
+    // Check for update request
+    if (message.toLowerCase().includes('update') || message.toLowerCase().includes('change')) {
+      const { taskId, updates } = extractTaskUpdates(message);
+
+      if (taskId && Object.keys(updates).length > 0) {
+        await useTaskStore.getState().updateTask(taskId, updates);
+        return NextResponse.json({
+          message: 'Task updated successfully',
+          action: ActionType.Update,
+          taskId,
+          updates
+        });
+      }
+    }
+
+    // Check for delete request
+    if (message.toLowerCase().includes('delete') || message.toLowerCase().includes('remove')) {
+      const taskId = extractTaskForDeletion(message);
+
+      if (taskId) {
+        await useTaskStore.getState().deleteTask(taskId);
+        return NextResponse.json({
+          message: 'Task deleted successfully',
+          action: ActionType.Delete,
+          taskId
+        });
+      }
+    }
+
+    // If no update or delete action, proceed with existing task creation logic
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
-          content: `You are a task management assistant. Extract tasks from user messages and format them according to these rules:
-          - Keep titles short and clear (max 7 words)
-          - Keep descriptions brief but informative (max 20 words)
-          - Set appropriate status (PENDING/IN_PROGRESS) and priority (LOW/MEDIUM/HIGH) based on context
-          - If no clear task is mentioned, ask the user what task they'd like to create`,
+          content: `You are a task management assistant. You can:
+1. Create new tasks from user messages
+2. Update existing tasks when users mention task IDs or task titles
+3. Delete tasks when users request deletion by task ID or task titles
+
+For task creation:
+- Keep titles short and clear (max 7 words)
+- Keep descriptions brief but informative (max 20 words)
+- Set appropriate status (PENDING/IN_PROGRESS) and priority (LOW/MEDIUM/HIGH) based on context
+
+For task updates and deletions:
+- Look for task IDs in the message (format: "task #123" or "ID: 123") or task titles
+- Identify if the user wants to update or delete the task
+- For updates, extract only the fields that need to be changed (title, description, status, priority, dueDate)
+- For deletions, confirm the task ID to be deleted
+
+If no clear task action is mentioned, ask the user what they'd like to do.`,
         },
         { role: "user", content: message },
       ],
@@ -64,7 +137,7 @@ export const POST = async (req: Request) => {
           required: ["tasks"]
         }
       }],
-      function_call: { name: "extractTasks" }, // Force function call
+      function_call: { name: "extractTasks" },
       temperature: 0.7,
     });
 
