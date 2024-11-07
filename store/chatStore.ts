@@ -32,55 +32,81 @@ export const useChatStore = create<ChatStoreProps>((set, get) => ({
         set({ isLoading: true });
 
         try {
-            // Extract action type and task ID before making the API call
             const action = detectActionType(state.inputValue);
-            const taskId = extractTaskId(state.inputValue);
             const currentTasks = useTaskStore.getState().tasks;
 
-            // For PUT and DELETE, use the tasks API directly
-            if ((method === 'PUT' || method === 'DELETE') && taskId) {
-                const response = await fetch(`/api/tasks/${taskId}`, {
-                    method,
+            // For DELETE method, use chat API first to identify task
+            if (method === 'DELETE') {
+                const response = await fetch('/api/chat', {
+                    method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
-                    body: method === 'PUT' ? JSON.stringify({
+                    body: JSON.stringify({
                         message: state.inputValue,
-                        action,
-                        currentTasks
-                    }) : null,
+                        action
+                    }),
                 });
 
                 const data = await response.json();
 
-                // Add user message
-                const userMessage: ChatMessage = {
-                    id: uuidv4(),
-                    role: 'user',
-                    content: state.inputValue,
-                    timestamp: new Date(),
-                };
+                if (data.taskId) {
+                    // Execute actual deletion
+                    const deleteResponse = await fetch(`/api/tasks/${data.taskId}`, {
+                        method: 'DELETE',
+                    });
+                    const deleteResult = await deleteResponse.json();
 
-                // Add AI response
-                const aiMessage: ChatMessage = {
-                    id: uuidv4(),
-                    role: 'Copilot',
-                    content: data.message,
-                    timestamp: new Date(),
-                    tasks: data.task ? [data.task] : undefined
-                };
+                    if (deleteResult.success) {
+                        useTaskStore.getState().deleteTask(data.taskId);
 
-                set(state => ({
-                    messages: [...state.messages, userMessage, aiMessage],
-                    inputValue: '',
-                    isLoading: false
-                }));
+                        // Return proper ChatResponse
+                        return {
+                            id: uuidv4(),
+                            role: 'Copilot',
+                            content: deleteResult.message,
+                            timestamp: new Date(),
+                            action: ActionType.Delete,
+                            taskId: data.taskId
+                        };
+                    }
+                }
 
+                // If no task found or deletion failed
                 return {
                     id: uuidv4(),
                     role: 'Copilot',
-                    content: data.message,
+                    content: data.message || 'No matching task found to delete.',
                     timestamp: new Date(),
-                    tasks: data.task ? [data.task] : undefined
+                    action: ActionType.Delete
                 };
+            }
+
+            // For PUT requests, use the tasks API directly
+            if (method === 'PUT') {
+                // Extract task updates including taskId
+                const taskData = extractTaskUpdates(state.inputValue, currentTasks);
+
+                if (taskData?.taskId) {
+                    const response = await fetch(`/api/tasks/${taskData.taskId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            message: state.inputValue,
+                            action,
+                            currentTasks
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.task) {
+                        return {
+                            id: uuidv4(),
+                            role: 'Copilot',
+                            content: data.message,
+                            timestamp: new Date(),
+                            tasks: [data.task]
+                        };
+                    }
+                }
             }
 
             // For POST requests, use the chat API
@@ -241,9 +267,19 @@ export const extractTaskForDeletion = (message: string, tasks: TaskProps[]) => {
     return task?.id || null;
 };
 
-// Update extractTaskUpdates
+// Update extractTaskUpdates to include taskId
 export const extractTaskUpdates = (message: string, tasks: TaskProps[]) => {
     const task = findTask(message, tasks);
-    const taskId = task?.id || null;
-    // ... rest of the function
+    if (!task) return null;
+
+    return {
+        taskId: task.id,  // Include taskId in the return object
+        updates: {        // Nest the updates in an updates property
+            status: task.status,
+            priority: task.priority,
+            title: task.title,
+            description: task.description,
+            dueDate: task.dueDate
+        }
+    };
 };

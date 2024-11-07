@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { useTaskStore } from '../../../../../store/taskStore';
-import { ActionType } from '../../../../../types/types';
+import { ActionType, TaskProps } from '../../../../../types/types';
 import { extractTaskUpdates } from '../../../../../store/chatStore';
+
+
 export async function PUT(
     request: Request,
     { params }: { params: { id: string } }
@@ -9,8 +11,8 @@ export async function PUT(
     try {
         const { message, action, currentTasks } = await request.json();
         console.log('PUT request received for task:', params.id);
-        // Extract updates from the message and current tasks
-        const updates = extractTaskUpdates(message, currentTasks);
+        // Extract updates and ensure it matches TaskProps structure
+        const updates = extractTaskUpdates(message, currentTasks) as Partial<TaskProps>;
         if (updates === undefined || updates === null) {
             return NextResponse.json(
                 { error: 'No valid updates found' },
@@ -53,10 +55,14 @@ export async function DELETE(
             );
         }
 
-        await taskStore.deleteTask(params.id);
+        // Delete the task
+        taskStore.deleteTask(params.id);
 
         return NextResponse.json({
-            message: 'Task deleted successfully'
+            message: 'Task deleted successfully',
+            success: true,
+            action: ActionType.Delete,
+            taskId: params.id
         });
     } catch (error) {
         return NextResponse.json(

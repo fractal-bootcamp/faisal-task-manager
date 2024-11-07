@@ -18,7 +18,7 @@ const openai = instructor({
 
 // Add a function to find task by ID or title
 const findTask = (message: string, tasks: TaskProps[]) => {
-  // First try to find by exact ID match (UUID or numeric)
+  // First try to find by exact ID match
   const idMatch = message.match(/(?:task #|ID:?\s*)([a-zA-Z0-9-]+)/i);
   if (idMatch) {
     const taskId = idMatch[1];
@@ -26,9 +26,19 @@ const findTask = (message: string, tasks: TaskProps[]) => {
     if (taskById) return taskById;
   }
 
-  // Then try to find by title
+  // Then try to find by exact title match
+  const exactMatch = tasks.find(task =>
+    message.toLowerCase().includes(task.title.toLowerCase())
+  );
+  if (exactMatch) return exactMatch;
+
+  // Finally, try fuzzy matching
+  const words = message.toLowerCase().split(/\s+/);
   return tasks.find(task =>
-    task.title.toLowerCase().includes(message.toLowerCase())
+    words.some(word =>
+      task.title.toLowerCase().includes(word) ||
+      task.description.toLowerCase().includes(word)
+    )
   );
 };
 
@@ -133,6 +143,11 @@ export const POST = async (req: NextRequest) => {
           taskId: taskToDelete.id
         });
       }
+      // Add this return to prevent task creation if no matching task found
+      return NextResponse.json({
+        message: "No matching task found to delete.",
+        action: ActionType.Delete
+      });
     }
 
     // Only proceed with OpenAI completion for task creation if no action detected
@@ -256,7 +271,7 @@ export async function PUT(req: NextRequest) {
 }
 
 // Handle task deletions through chat
-export async function DELETE(req: NextRequest) {
+export const DELETE = async (req: NextRequest) => {
   try {
     const { message } = await req.json();
     console.log('Received DELETE message:', message);
@@ -274,7 +289,7 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({
       message: 'Task deleted successfully',
       action: ActionType.Delete,
-      taskId: taskToDelete.id
+      taskId: taskToDelete
     });
   } catch (error) {
     console.error('Error in chat DELETE route:', error);
