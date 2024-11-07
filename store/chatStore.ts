@@ -70,11 +70,11 @@ export const useChatStore = create<ChatStoreProps>((set, get) => ({
                     }
                 }
 
-                // If no task found or deletion failed
+                // If deletion failed or no task found
                 return {
                     id: uuidv4(),
                     role: 'Copilot',
-                    content: data.message || 'No matching task found to delete.',
+                    content: data.error || 'No matching task found to delete.',
                     timestamp: new Date(),
                     action: ActionType.Delete
                 };
