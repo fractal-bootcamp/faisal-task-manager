@@ -43,12 +43,7 @@ const findTask = (message: string, tasks: TaskProps[]) => {
 };
 
 // Add a function to extract task ID for deletion
-const extractTaskForDeletion = (message: string) => {
-  const taskStore = useTaskStore.getState();
-  const tasks = taskStore.tasks;
-
-  console.log('Current tasks in store:', tasks);
-
+const extractTaskForDeletion = (message: string, tasks: TaskProps[]) => {
   // First try to find by exact title match
   const task = tasks.find(t =>
     message.toLowerCase().includes(t.title.toLowerCase()) ||
@@ -76,7 +71,7 @@ const extractTaskUpdates = (message: string) => {
   console.log('Available tasks:', tasks);
 
   // Find the task first
-  const task = extractTaskForDeletion(message);
+  const task = extractTaskForDeletion(message, tasks);
   if (!task) {
     console.log('No task found for updates');
     return null;
@@ -276,7 +271,11 @@ export const DELETE = async (req: NextRequest) => {
     const { message } = await req.json();
     console.log('Received DELETE message:', message);
 
-    const taskToDelete = extractTaskForDeletion(message);
+    // Get current tasks from store
+    const taskStore = useTaskStore.getState();
+    const currentTasks = taskStore.tasks;
+
+    const taskToDelete = extractTaskForDeletion(message, currentTasks);
     console.log('Task to delete:', taskToDelete);
 
     if (!taskToDelete) {
@@ -287,14 +286,14 @@ export const DELETE = async (req: NextRequest) => {
     }
 
     return NextResponse.json({
-      message: 'Task deleted successfully',
+      message: 'Task identified for deletion',
       action: ActionType.Delete,
       taskId: taskToDelete
     });
   } catch (error) {
     console.error('Error in chat DELETE route:', error);
     return NextResponse.json(
-      { error: 'Failed to delete task' },
+      { error: 'Failed to process delete request' },
       { status: 500 }
     );
   }
