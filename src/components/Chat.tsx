@@ -4,8 +4,7 @@ import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useToast } from "@/hooks/use-toast";
-import { ActionType } from '../../types/types';
-import { ChatResponse } from '../../types/types';
+import { ActionType, TaskProps, ChatResponse } from '../../types/types';
 import { detectActionType } from '../../store/chatStore';
 import { useTaskStore } from '../../store/taskStore';
 import { useRef, useEffect } from 'react';
@@ -19,6 +18,8 @@ export const Chat = () => {
     sendMessage,
     handleInputChange
   } = useChatStore();
+  const { tasks } = useTaskStore();
+
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -35,10 +36,54 @@ export const Chat = () => {
     }
   };
 
+
+  const extractAction = async (message: string): Promise<{ action: ActionType }> => {
+    try {
+      const response = await fetch('/api/analyze-action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message })
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error extracting action:', error);
+      return { action: ActionType.None };
+    }
+  };
+
+  const extractUpdate = async (tasks: TaskProps[], actionType: ActionType): Promise<{ taskId: string, updates: Partial<TaskProps> }> => {
+    try {
+      const response = await fetch('/api/analyze-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tasks, actionType })
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error extracting updates:', error);
+      return { taskId: '', updates: {} };
+    }
+  };
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       console.log('Submitting chat message');
+
+      // look at the message and determine if any action is needed
+      const { action: actionType } = await extractAction(inputValue); // an AI call
+
+      // look at the tasks and message and determine which task to update, and what updates to make
+      // create - what do I create
+      // delete - which task to delete
+      // update - which task to update, and what updates to make
+      const { taskId, updates } = await extractUpdate(tasks, actionType); // an AI call
+
+      console.log('Task ID:', taskId);
+      console.log('Updates:', updates);
+
+
 
       // Detect action type from message
       const action = detectActionType(inputValue);

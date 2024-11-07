@@ -111,8 +111,10 @@ export interface TaskCreationSchema {
 
 // Define an enum for action types
 export enum ActionType {
+    None = 'none',
     Update = 'update',
     Delete = 'delete',
+    Create = 'create',
 }
 
 export interface ChatResponse extends ChatMessage {
