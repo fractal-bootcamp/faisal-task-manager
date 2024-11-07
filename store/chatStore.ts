@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { ChatMessage, TaskProps, StatusProps, PriorityProps } from "../types/types";
 import { ExtractedTask } from "../types/schemas";
 import { useTaskStore } from "./taskStore";
+import { ActionType } from "../types/types";
 
 interface ChatStoreProps {
     messages: ChatMessage[];
@@ -48,18 +49,20 @@ export const useChatStore = create<ChatStoreProps>((set, get) => ({
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: state.inputValue }),
+                body: JSON.stringify({
+                    message: state.inputValue,
+                    action: detectActionType(state.inputValue),
+                    taskId: extractTaskId(state.inputValue)
+                }),
             });
 
             const data = await response.json();
 
-            console.log(data);
-
-            // Add copilot message with tasks
+            // Create new message
             const newMessage: ChatMessage = {
                 id: uuidv4(),
                 role: 'Copilot',
-                content: data.message || "I'll help you create a task.",
+                content: data.message,
                 timestamp: new Date(),
                 tasks: data.tasks
             };
@@ -70,8 +73,18 @@ export const useChatStore = create<ChatStoreProps>((set, get) => ({
                 isLoading: false
             }));
 
-            // If tasks were extracted, add them to the task store
-            if (data.tasks && data.tasks.length > 0) {
+            // Handle different types of responses
+            if (data.action === ActionType.Update && data.taskId && data.updates) {
+                const taskStore = useTaskStore.getState();
+                await taskStore.updateTask(data.taskId, {
+                    ...data.updates,
+                    updatedAt: new Date()
+                });
+            } else if (data.action === ActionType.Delete && data.taskId) {
+                const taskStore = useTaskStore.getState();
+                await taskStore.handleDeleteWithToast(data.taskId);
+            } else if (data.tasks && data.tasks.length > 0) {
+                // Handle task creation (existing logic)
                 data.tasks.forEach((task: ExtractedTask) => {
                     const newTask: TaskProps = {
                         id: uuidv4(),
@@ -97,4 +110,26 @@ export const useChatStore = create<ChatStoreProps>((set, get) => ({
 
     setInputValue: (value: string) => set({ inputValue: value }),
     clearMessages: () => set({ messages: [] }),
-})); 
+}));
+
+// Helper functions for action detection
+const detectActionType = (message: string): ActionType | null => {
+    const updateKeywords = ['update', 'change', 'modify', 'edit', 'refine', 'improve', 'correct', 'fix'];
+    const deleteKeywords = ['delete', 'remove', 'trash', 'cancel', 'erase', 'eliminate', 'clear', 'wipe'];
+
+    message = message.toLowerCase();
+
+    if (updateKeywords.some(keyword => message.includes(keyword))) {
+        return ActionType.Update;
+    }
+    if (deleteKeywords.some(keyword => message.includes(keyword))) {
+        return ActionType.Delete;
+    }
+    return null;
+};
+
+const extractTaskId = (message: string): string | null => {
+    // Match patterns like "task #123" or "ID: 123"
+    const matches = message.match(/(?:task #|ID:?\s*)(\d+)/i);
+    return matches ? matches[1] : null;
+};
