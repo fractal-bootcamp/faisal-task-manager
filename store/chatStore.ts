@@ -11,7 +11,7 @@ interface ChatStoreProps {
     inputValue: string;
 
     // Chat actions
-    sendMessage: (e: React.FormEvent) => Promise<ChatResponse>;
+    sendMessage: (e: React.FormEvent, method: string) => Promise<ChatResponse>;
     setInputValue: (value: string) => void;
     clearMessages: () => void;
     handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
@@ -26,7 +26,7 @@ export const useChatStore = create<ChatStoreProps>((set, get) => ({
         set({ inputValue: e.target.value });
     },
 
-    sendMessage: async (e: React.FormEvent) => {
+    sendMessage: async (e: React.FormEvent, method: string) => {
         e.preventDefault();
         const state = get();
         set({ isLoading: true });
@@ -35,16 +35,62 @@ export const useChatStore = create<ChatStoreProps>((set, get) => ({
             // Extract action type and task ID before making the API call
             const action = detectActionType(state.inputValue);
             const taskId = extractTaskId(state.inputValue);
+            const currentTasks = useTaskStore.getState().tasks;
 
-            // First, get the chat API response
+            // For PUT and DELETE, use the tasks API directly
+            if ((method === 'PUT' || method === 'DELETE') && taskId) {
+                const response = await fetch(`/api/tasks/${taskId}`, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: method === 'PUT' ? JSON.stringify({
+                        message: state.inputValue,
+                        action,
+                        currentTasks
+                    }) : null,
+                });
+
+                const data = await response.json();
+
+                // Add user message
+                const userMessage: ChatMessage = {
+                    id: uuidv4(),
+                    role: 'user',
+                    content: state.inputValue,
+                    timestamp: new Date(),
+                };
+
+                // Add AI response
+                const aiMessage: ChatMessage = {
+                    id: uuidv4(),
+                    role: 'Copilot',
+                    content: data.message,
+                    timestamp: new Date(),
+                    tasks: data.task ? [data.task] : undefined
+                };
+
+                set(state => ({
+                    messages: [...state.messages, userMessage, aiMessage],
+                    inputValue: '',
+                    isLoading: false
+                }));
+
+                return {
+                    id: uuidv4(),
+                    role: 'Copilot',
+                    content: data.message,
+                    timestamp: new Date(),
+                    tasks: data.task ? [data.task] : undefined
+                };
+            }
+
+            // For POST requests, use the chat API
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     message: state.inputValue,
                     action,
-                    taskId,
-                    currentTasks: useTaskStore.getState().tasks // Add current tasks context
+                    currentTasks
                 }),
             });
 
@@ -79,7 +125,17 @@ export const useChatStore = create<ChatStoreProps>((set, get) => ({
 
                 if (deleteResult.success) {
                     // Update local store
-                    useTaskStore.getState().handleDeleteConfirm(data.taskId);
+                    useTaskStore.getState().deleteTask(data.taskId);
+
+                    // Return proper ChatResponse
+                    return {
+                        id: uuidv4(),
+                        role: 'Copilot',
+                        content: deleteResult.message,
+                        timestamp: new Date(),
+                        action: ActionType.Delete,
+                        taskId: data.taskId
+                    };
                 }
             }
 
@@ -180,13 +236,13 @@ const findTask = (message: string, tasks: TaskProps[]) => {
 };
 
 // Update extractTaskForDeletion
-const extractTaskForDeletion = (message: string, tasks: TaskProps[]) => {
+export const extractTaskForDeletion = (message: string, tasks: TaskProps[]) => {
     const task = findTask(message, tasks);
     return task?.id || null;
 };
 
 // Update extractTaskUpdates
-const extractTaskUpdates = (message: string, tasks: TaskProps[]) => {
+export const extractTaskUpdates = (message: string, tasks: TaskProps[]) => {
     const task = findTask(message, tasks);
     const taskId = task?.id || null;
     // ... rest of the function
