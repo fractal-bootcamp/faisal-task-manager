@@ -114,3 +114,10 @@ export enum ActionType {
     Update = 'update',
     Delete = 'delete',
 }
+
+export interface ChatResponse extends ChatMessage {
+    action?: ActionType;
+    message?: string;
+    taskId?: string;
+    updates?: Partial<TaskProps>;
+}
