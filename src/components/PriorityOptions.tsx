@@ -13,7 +13,7 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover"
 import { PRIORITY_OPTIONS, PriorityProps } from "../../types/types";
-import { PRIORITY_BADGE_COLORS } from "../../types/types";
+import { PRIORITY_BADGE_COLORS } from "../../utils/styling";
 
 interface PriorityOptionsProps {
     currentPriority: PriorityProps;

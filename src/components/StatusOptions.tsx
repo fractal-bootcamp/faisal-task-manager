@@ -12,7 +12,7 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover"
 import { STATUS_OPTIONS, StatusProps, StatusOptionsProps } from "../../types/types";
-import { STATUS_BADGE_COLORS } from "../../types/types";
+import { STATUS_BADGE_COLORS } from "../../utils/styling";
 
 const StatusOptions: React.FC<StatusOptionsProps> = ({ currentStatus, onStatusChange }) => {
     return (

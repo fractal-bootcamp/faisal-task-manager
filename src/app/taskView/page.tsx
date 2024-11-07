@@ -4,7 +4,7 @@ import { useTaskStore } from "../../../store/taskStore";
 import TaskCard from "@/components/TaskCard";
 import { STATUS_OPTIONS, StatusProps } from "../../../types/types";
 import { Badge } from "@/components/ui/badge";
-import { STATUS_BADGE_COLORS, PRIORITY_BADGE_COLORS } from "../../../types/types";
+import { STATUS_BADGE_COLORS, PRIORITY_BADGE_COLORS } from "../../../utils/styling";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";

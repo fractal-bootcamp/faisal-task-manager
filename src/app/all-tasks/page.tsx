@@ -3,7 +3,8 @@
 import { useTaskStore } from "../../../store/taskStore";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { STATUS_BADGE_COLORS, StatusProps, PRIORITY_BADGE_COLORS } from "../../../types/types";
+import { STATUS_BADGE_COLORS, PRIORITY_BADGE_COLORS } from "../../../utils/styling";
+import { StatusProps } from "../../../types/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
