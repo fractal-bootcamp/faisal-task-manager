@@ -113,7 +113,7 @@ export const useChatStore = create<ChatStoreProps>((set, get) => ({
 }));
 
 // Helper functions for action detection
-const detectActionType = (message: string): ActionType | null => {
+export const detectActionType = (message: string): ActionType | null => {
     const updateKeywords = ['update', 'change', 'modify', 'edit', 'refine', 'improve', 'correct', 'fix'];
     const deleteKeywords = ['delete', 'remove', 'trash', 'cancel', 'erase', 'eliminate', 'clear', 'wipe'];
 
