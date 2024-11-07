@@ -4,6 +4,8 @@ import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useToast } from "@/hooks/use-toast";
+import { ActionType } from '../../types/types';
+import { ChatResponse } from '../../types/types';
 
 export const Chat = () => {
   const { toast } = useToast();
@@ -25,20 +27,30 @@ export const Chat = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await sendMessage(e);
+      const response: ChatResponse = await sendMessage(e);
       console.log('Chat response:', response);
 
-      if (response?.tasks && response.tasks.length > 0) {
+      if (response.action === ActionType.Update) {
+        toast({
+          title: "Task updated successfully",
+          description: response.message,
+        });
+      } else if (response.action === ActionType.Delete) {
+        toast({
+          title: "Task deleted successfully",
+          description: response.message,
+        });
+      } else if (response.tasks && response.tasks.length > 0) {
         toast({
           title: "Task created successfully",
           description: `Created ${response.tasks.length} task(s) from your message.`,
         });
       }
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('Error:', error);
       toast({
         title: "Error",
-        description: "Failed to create task. Please try again.",
+        description: "Failed to process your request. Please try again.",
         variant: "destructive",
       });
     }
