@@ -10,21 +10,18 @@ import { ModeToggle } from "@/components/ThemeToggle"
 const Dashboard = () => {
     return (
         <div className="container mx-auto py-6">
-            <div className="flex justify-between items-center mb-6 px-6">
-                <h1 className="text-3xl font-bold">Dashboard</h1>
-                <div className="pr-80">
-                    <ModeToggle />
-                </div>
-            </div>
             <div className="flex">
                 <div className="flex-1 pr-[300px]">
                     <Tabs defaultValue="taskboard" className="w-full">
-                        {/* Tab triggers */}
+                        {/* Updated tab triggers section to include ModeToggle */}
                         <div className="flex justify-between items-center px-6">
-                            <TabsList>
-                                <TabsTrigger value="taskboard">Task Board</TabsTrigger>
-                                <TabsTrigger value="alltasks">All Tasks</TabsTrigger>
-                            </TabsList>
+                            <div className="flex items-center gap-4"> {/* Added container for TabsList and ModeToggle */}
+                                <TabsList>
+                                    <TabsTrigger value="taskboard">Task Board</TabsTrigger>
+                                    <TabsTrigger value="alltasks">All Tasks</TabsTrigger>
+                                </TabsList>
+                                <ModeToggle />
+                            </div>
                         </div>
 
                         {/* Tab content */}
