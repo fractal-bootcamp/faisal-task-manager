@@ -2,7 +2,7 @@ import OpenAI from 'openai';
 import { NextResponse } from 'next/server';
 import instructor from '@instructor-ai/instructor';
 import { useTaskStore } from '../../../../store/taskStore';
-import { ActionType, PriorityProps, StatusProps } from '../../../../types/types';
+import { ActionType, PriorityProps, StatusProps, TaskProps } from '../../../../types/types';
 import { detectActionType } from '../../../../store/chatStore';
 
 // Initialize OpenAI client with instructor wrapper
@@ -16,54 +16,59 @@ const openai = instructor({
   mode: "FUNCTIONS"
 });
 
+// Add a function to find task by ID or title
+const findTask = (message: string) => {
+  const tasks = useTaskStore.getState().tasks;
+
+  // First try to find by exact ID match (UUID or numeric)
+  const idMatch = message.match(/(?:task #|ID:?\s*)([a-zA-Z0-9-]+)/i);
+  if (idMatch) {
+    const taskId = idMatch[1];
+    const taskById = tasks.find(task => task.id === taskId);
+    if (taskById) return taskById;
+  }
+
+  // Then try to find by title
+  return tasks.find(task =>
+    task.title.toLowerCase().includes(message.toLowerCase())
+  );
+};
+
 // Add a function to extract task ID for deletion
 const extractTaskForDeletion = (message: string) => {
-  const idMatch = message.match(/(?:task #|ID:?\s*)(\d+)/i);
-  if (idMatch) return idMatch[1];
-
-  // If no ID found, try to find by title
-  const task = findTaskByTitle(message);
-  return task ? task.id : null;
+  const task = findTask(message);
+  return task?.id || null;
 };
 
 // Add a function to extract task updates from the message
 const extractTaskUpdates = (message: string) => {
-  // Try to find by ID first
-  const idMatch = message.match(/(?:task #|ID:?\s*)(\d+)/i);
-  let taskId = idMatch ? (idMatch[1] || idMatch[2]) : null;
+  const task = findTask(message);
+  const taskId = task?.id || null;
 
-  // If no ID found, try to find by title
-  if (!taskId) {
-    const task = findTaskByTitle(message);
-    if (task) {
-      taskId = task.id;
-    }
+  // Extract priority update - match exact enum values
+  const priorityMatch = message.match(/priority (?:to |:?\s*)(Low|Medium|High)/i);
+  const priority = priorityMatch ? priorityMatch[1] : null;
+
+  // Extract status update - match exact enum values
+  const statusMatch = message.match(/status (?:to |:?\s*)(Pending|In Progress|Completed|Archived)/i);
+  const status = statusMatch ? statusMatch[1] : null;
+
+  // Create updates object only if we have valid matches
+  const updates: Partial<TaskProps> = {};
+
+  if (priority) {
+    updates.priority = PriorityProps[priority as keyof typeof PriorityProps];
   }
 
-  // Extract priority update
-  const priorityMatch = message.match(/priority (?:to |:?\s*)(low|medium|high)/i);
-  const priority = priorityMatch ? priorityMatch[1].toUpperCase() : null;
-
-  // Extract status update
-  const statusMatch = message.match(/status (?:to |:?\s*)(pending|in progress|completed|archived)/i);
-  const status = statusMatch ? statusMatch[1].toUpperCase() : null;
+  if (status) {
+    updates.status = StatusProps[status.replace(' ', '_').toUpperCase() as keyof typeof StatusProps];
+  }
 
   return {
     taskId,
-    updates: {
-      ...(priority && { priority: PriorityProps[priority as keyof typeof PriorityProps] }),
-      ...(status && { status: StatusProps[status as keyof typeof StatusProps] }),
-    }
+    updates,
+    task // Include the original task for reference
   };
-};
-
-// Add this function after the existing extraction functions
-const findTaskByTitle = (title: string) => {
-  const tasks = useTaskStore.getState().tasks;
-  // Case-insensitive partial match for task titles
-  return tasks.find(task =>
-    task.title.toLowerCase().includes(title.toLowerCase())
-  );
 };
 
 export const POST = async (req: Request) => {
@@ -84,11 +89,13 @@ export const POST = async (req: Request) => {
 
       if (taskId && Object.keys(updates).length > 0) {
         await useTaskStore.getState().updateTask(taskId, updates);
+        const task = findTask(message);
         return NextResponse.json({
           message: 'Task updated successfully',
           action: ActionType.Update,
           taskId,
-          updates
+          updates,
+          tasks: [task]
         });
       }
     }
@@ -102,7 +109,8 @@ export const POST = async (req: Request) => {
         return NextResponse.json({
           message: 'Task deleted successfully',
           action: ActionType.Delete,
-          taskId
+          taskId,
+          tasks: []
         });
       }
     }
