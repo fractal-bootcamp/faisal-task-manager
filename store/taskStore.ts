@@ -115,11 +115,17 @@ export const useTaskStore = create<TaskStoreProps>((set, get) => ({
     })),
 
     // Task update handlers for modifying existing tasks
-    handleTaskStatusChange: (id, status) => set((state) => ({
-        tasks: state.tasks.map(task =>
-            task.id === id ? { ...task, status, updatedAt: new Date() } : task
-        )
-    })),
+    handleTaskStatusChange: (id, status) => {
+        console.log('handleTaskStatusChange called:', { id, status });
+        set((state) => {
+            console.log('Current tasks:', state.tasks);
+            const updatedTasks = state.tasks.map(task =>
+                task.id === id ? { ...task, status, updatedAt: new Date() } : task
+            );
+            console.log('Updated tasks:', updatedTasks);
+            return { tasks: updatedTasks };
+        });
+    },
 
     handleTaskPriorityChange: (id, priority) => set((state) => ({
         tasks: state.tasks.map(task =>
@@ -203,9 +209,15 @@ export const useTaskStore = create<TaskStoreProps>((set, get) => ({
         )
     })),
 
-    deleteTask: (id) => set((state) => ({
-        tasks: state.tasks.filter(task => task.id !== id)
-    })),
+    deleteTask: (id) => {
+        console.log('deleteTask called:', { id });
+        set((state) => {
+            console.log('Current tasks before deletion:', state.tasks);
+            const filteredTasks = state.tasks.filter(task => task.id !== id);
+            console.log('Tasks after deletion:', filteredTasks);
+            return { tasks: filteredTasks };
+        });
+    },
 
     // Task edit handlers
     handleUpdateTask: (e, id) => {
@@ -326,20 +338,22 @@ export const useTaskStore = create<TaskStoreProps>((set, get) => ({
     },
 
     handleDeleteWithToast: (taskId: string) => {
+        console.log('handleDeleteWithToast called:', { taskId });
         const state = get();
         const taskToDelete = state.tasks.find(task => task.id === taskId);
+        console.log('Task to delete:', taskToDelete);
         if (!taskToDelete) return;
 
         // Create a deep copy of the task before deletion
         const taskCopy = { ...taskToDelete };
+        console.log('Task copy created:', taskCopy);
 
-        // Delete the task
         set((state) => ({
             tasks: state.tasks.filter(task => task.id !== taskId),
             isDeleteDialogOpen: false,
             taskToDelete: null
         }));
 
-        return taskCopy; // Return the deleted task copy
+        return taskCopy;
     },
 }))

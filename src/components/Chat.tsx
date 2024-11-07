@@ -27,27 +27,31 @@ export const Chat = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      console.log('Submitting chat message');
       const response: ChatResponse = await sendMessage(e);
-      console.log('Chat response:', response);
+      console.log('Chat response received:', response);
 
       if (response.action === ActionType.Update) {
+        console.log('Update action detected:', response);
         toast({
           title: "Task updated successfully",
           description: response.message,
         });
       } else if (response.action === ActionType.Delete) {
+        console.log('Delete action detected:', response);
         toast({
           title: "Task deleted successfully",
           description: response.message,
         });
       } else if (response.tasks && response.tasks.length > 0) {
+        console.log('New tasks created:', response.tasks);
         toast({
           title: "Task created successfully",
           description: `Created ${response.tasks.length} task(s) from your message.`,
         });
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error in handleSubmit:', error);
       toast({
         title: "Error",
         description: "Failed to process your request. Please try again.",

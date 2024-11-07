@@ -7,11 +7,18 @@ export async function PUT(
     { params }: { params: { id: string } }
 ) {
     try {
+        console.log('PUT request received for task:', params.id);
         const updates: Partial<TaskProps> = await request.json();
+        console.log('Updates received:', updates);
+
         const taskStore = useTaskStore.getState();
+        console.log('Current store state:', taskStore);
+
         const task = taskStore.tasks.find(t => t.id === params.id);
+        console.log('Found task:', task);
 
         if (!task) {
+            console.log('Task not found');
             return NextResponse.json(
                 { error: 'Task not found' },
                 { status: 404 }
@@ -20,12 +27,14 @@ export async function PUT(
 
         await taskStore.updateTask(params.id, updates);
         const updatedTask = taskStore.tasks.find(t => t.id === params.id);
+        console.log('Task after update:', updatedTask);
 
         return NextResponse.json({
             message: 'Task updated successfully',
             task: updatedTask
         });
     } catch (error) {
+        console.error('Error in PUT route:', error);
         return NextResponse.json(
             { error: 'Failed to update task' },
             { status: 500 }
