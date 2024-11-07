@@ -17,9 +17,7 @@ const openai = instructor({
 });
 
 // Add a function to find task by ID or title
-const findTask = (message: string) => {
-  const tasks = useTaskStore.getState().tasks;
-
+const findTask = (message: string, tasks: TaskProps[]) => {
   // First try to find by exact ID match (UUID or numeric)
   const idMatch = message.match(/(?:task #|ID:?\s*)([a-zA-Z0-9-]+)/i);
   if (idMatch) {
@@ -36,39 +34,73 @@ const findTask = (message: string) => {
 
 // Add a function to extract task ID for deletion
 const extractTaskForDeletion = (message: string) => {
-  const task = findTask(message);
-  return task?.id || null;
+  const taskStore = useTaskStore.getState();
+  const tasks = taskStore.tasks;
+
+  console.log('Extracting task for deletion from message:', message);
+  console.log('Available tasks:', tasks);
+
+  // First try to find by ID
+  const idMatch = message.match(/(?:task #|ID:?\s*)([a-zA-Z0-9-]+)/i);
+  if (idMatch) {
+    const taskId = idMatch[1];
+    const task = tasks.find(t => t.id === taskId);
+    console.log('Found task by ID:', task);
+    return task;
+  }
+
+  // Then try to find by title
+  const task = tasks.find(t =>
+    message.toLowerCase().includes(t.title.toLowerCase())
+  );
+  console.log('Found task by title:', task);
+  return task;
 };
 
 // Add a function to extract task updates from the message
 const extractTaskUpdates = (message: string) => {
-  const task = findTask(message);
-  const taskId = task?.id || null;
+  const taskStore = useTaskStore.getState();
+  const tasks = taskStore.tasks;
 
-  // Extract priority update - match exact enum values
-  const priorityMatch = message.match(/priority (?:to |:?\s*)(Low|Medium|High)/i);
-  const priority = priorityMatch ? priorityMatch[1] : null;
+  console.log('Extracting updates from message:', message);
+  console.log('Available tasks:', tasks);
 
-  // Extract status update - match exact enum values
-  const statusMatch = message.match(/status (?:to |:?\s*)(Pending|In Progress|Completed|Archived)/i);
-  const status = statusMatch ? statusMatch[1] : null;
+  // Find the task first
+  const task = extractTaskForDeletion(message);
+  if (!task) {
+    console.log('No task found for updates');
+    return null;
+  }
 
   // Create updates object only if we have valid matches
   const updates: Partial<TaskProps> = {};
 
-  if (priority) {
-    updates.priority = PriorityProps[priority as keyof typeof PriorityProps];
+  // Extract priority update
+  const priorityMatch = message.match(/priority (?:to |:?\s*)(Low|Medium|High)/i);
+  if (priorityMatch) {
+    updates.priority = priorityMatch[1].toUpperCase() as PriorityProps;
   }
 
-  if (status) {
-    updates.status = StatusProps[status.replace(' ', '_').toUpperCase() as keyof typeof StatusProps];
+  // Extract status update
+  const statusMatch = message.match(/status (?:to |:?\s*)(Pending|In Progress|Completed|Archived)/i);
+  if (statusMatch) {
+    updates.status = statusMatch[1].replace(' ', '_').toUpperCase() as StatusProps;
   }
 
-  return {
-    taskId,
-    updates,
-    task // Include the original task for reference
-  };
+  // Extract title update
+  const titleMatch = message.match(/title (?:to |:?\s*)["'](.+?)["']/i);
+  if (titleMatch) {
+    updates.title = titleMatch[1];
+  }
+
+  // Extract description update
+  const descMatch = message.match(/description (?:to |:?\s*)["'](.+?)["']/i);
+  if (descMatch) {
+    updates.description = descMatch[1];
+  }
+
+  console.log('Extracted updates:', { taskId: task.id, updates });
+  return { taskId: task.id, updates };
 };
 
 export const POST = async (req: Request) => {
@@ -81,36 +113,48 @@ export const POST = async (req: Request) => {
 
   try {
     const { message } = await req.json();
+    console.log('Received message:', message);
+
     const action = detectActionType(message);
+    console.log('Detected action:', action);
 
     // Handle Update Action
     if (action === ActionType.Update) {
-      const { taskId, updates } = extractTaskUpdates(message);
+      const result = extractTaskUpdates(message);
+      console.log('Update extraction result:', result);
 
-      if (taskId && Object.keys(updates).length > 0) {
-        await useTaskStore.getState().updateTask(taskId, updates);
-        const task = findTask(message);
+      if (result && Object.keys(result.updates).length > 0) {
+        const taskStore = useTaskStore.getState();
+        await taskStore.updateTask(result.taskId, result.updates);
+
+        const updatedTask = taskStore.tasks.find(t => t.id === result.taskId);
+        console.log('Updated task:', updatedTask);
+
         return NextResponse.json({
           message: 'Task updated successfully',
           action: ActionType.Update,
-          taskId,
-          updates,
-          tasks: [task]
+          taskId: result.taskId,
+          updates: result.updates,
+          task: updatedTask
         });
       }
     }
 
     // Handle Delete Action
     if (action === ActionType.Delete) {
-      const taskId = extractTaskForDeletion(message);
+      const taskToDelete = extractTaskForDeletion(message);
+      console.log('Task to delete:', taskToDelete);
 
-      if (taskId) {
-        await useTaskStore.getState().deleteTask(taskId);
+      if (taskToDelete) {
+        const taskStore = useTaskStore.getState();
+        const taskCopy = { ...taskToDelete }; // Keep a copy for the response
+        await taskStore.deleteTask(taskToDelete.id);
+
         return NextResponse.json({
           message: 'Task deleted successfully',
           action: ActionType.Delete,
-          taskId,
-          tasks: []
+          taskId: taskToDelete.id,
+          task: taskCopy
         });
       }
     }

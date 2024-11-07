@@ -36,33 +36,51 @@ export const useChatStore = create<ChatStoreProps>((set, get) => ({
             const action = detectActionType(state.inputValue);
             const taskId = extractTaskId(state.inputValue);
 
+            // First, get the chat API response
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     message: state.inputValue,
                     action,
-                    taskId
+                    taskId,
+                    currentTasks: useTaskStore.getState().tasks // Add current tasks context
                 }),
             });
 
-            const data = await response.json();
+            let data = await response.json();
+            console.log('Chat API response:', data);
 
+            // Handle Update Action
             if (data.action === ActionType.Update && data.taskId && data.updates) {
-                // Call the PUT endpoint
+                console.log('Executing PUT request:', data.taskId, data.updates);
                 const updateResponse = await fetch(`/api/tasks/${data.taskId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data.updates),
                 });
                 const updateResult = await updateResponse.json();
-                data.tasks = updateResult.task ? [updateResult.task] : [];
-            } else if (data.action === ActionType.Delete && data.taskId) {
-                // Call the DELETE endpoint
-                await fetch(`/api/tasks/${data.taskId}`, {
+                console.log('PUT response:', updateResult);
+
+                if (updateResult.task) {
+                    data.tasks = [updateResult.task];
+                    // Update local store
+                    useTaskStore.getState().handleTaskStatusChange(data.taskId, updateResult.task.status);
+                }
+            }
+            // Handle Delete Action
+            else if (data.action === ActionType.Delete && data.taskId) {
+                console.log('Executing DELETE request:', data.taskId);
+                const deleteResponse = await fetch(`/api/tasks/${data.taskId}`, {
                     method: 'DELETE',
                 });
-                data.tasks = [];
+                const deleteResult = await deleteResponse.json();
+                console.log('DELETE response:', deleteResult);
+
+                if (deleteResult.success) {
+                    // Update local store
+                    useTaskStore.getState().handleDeleteConfirm(data.taskId);
+                }
             }
 
             // Add user message first
@@ -113,7 +131,7 @@ export const useChatStore = create<ChatStoreProps>((set, get) => ({
 
             return newMessage;
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Error in sendMessage:', error);
             set({ isLoading: false });
             throw error;
         }
@@ -143,4 +161,33 @@ const extractTaskId = (message: string): string | null => {
     // Match UUID or numeric ID
     const matches = message.match(/(?:task #|ID:?\s*)([a-zA-Z0-9-]+)/i);
     return matches ? matches[1] : null;
+};
+
+// Modify findTask to accept tasks array
+const findTask = (message: string, tasks: TaskProps[]) => {
+    // First try to find by exact ID match
+    const idMatch = message.match(/(?:task #|ID:?\s*)([a-zA-Z0-9-]+)/i);
+    if (idMatch) {
+        const taskId = idMatch[1];
+        const taskById = tasks.find(task => task.id === taskId);
+        if (taskById) return taskById;
+    }
+
+    // Then try to find by title
+    return tasks.find(task =>
+        task.title.toLowerCase().includes(message.toLowerCase())
+    );
+};
+
+// Update extractTaskForDeletion
+const extractTaskForDeletion = (message: string, tasks: TaskProps[]) => {
+    const task = findTask(message, tasks);
+    return task?.id || null;
+};
+
+// Update extractTaskUpdates
+const extractTaskUpdates = (message: string, tasks: TaskProps[]) => {
+    const task = findTask(message, tasks);
+    const taskId = task?.id || null;
+    // ... rest of the function
 };
