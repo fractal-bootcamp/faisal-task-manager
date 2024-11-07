@@ -6,6 +6,9 @@ import { cn } from '@/lib/utils';
 import { useToast } from "@/hooks/use-toast";
 import { ActionType } from '../../types/types';
 import { ChatResponse } from '../../types/types';
+import { detectActionType } from '../../store/chatStore';
+import { useTaskStore } from '../../store/taskStore';
+import { useRef, useEffect } from 'react';
 
 export const Chat = () => {
   const { toast } = useToast();
@@ -16,6 +19,14 @@ export const Chat = () => {
     sendMessage,
     handleInputChange
   } = useChatStore();
+
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -28,9 +39,21 @@ export const Chat = () => {
     e.preventDefault();
     try {
       console.log('Submitting chat message');
-      const response: ChatResponse = await sendMessage(e);
+
+      // Detect action type from message
+      const action = detectActionType(inputValue);
+      console.log('Detected action:', action);
+
+      // Use appropriate HTTP method based on action
+      const method = action === ActionType.Update ? 'PUT'
+        : action === ActionType.Delete ? 'DELETE'
+          : 'POST';
+
+      // Send message and get response using the chat store's sendMessage
+      const response: ChatResponse = await sendMessage(e, method);
       console.log('Chat response received:', response);
 
+      // Handle different response types
       if (response.action === ActionType.Update) {
         console.log('Update action detected:', response);
         toast({
@@ -50,6 +73,8 @@ export const Chat = () => {
           description: `Created ${response.tasks.length} task(s) from your message.`,
         });
       }
+
+      return response;
     } catch (error) {
       console.error('Error in handleSubmit:', error);
       toast({
@@ -57,6 +82,7 @@ export const Chat = () => {
         description: "Failed to process your request. Please try again.",
         variant: "destructive",
       });
+      throw error;
     }
   };
 
@@ -66,7 +92,10 @@ export const Chat = () => {
         <h2 className="text-lg font-semibold">AI Copilot</h2>
       </div>
 
-      <ScrollArea className="flex-1 p-4 h-[calc(100vh-16rem)]">
+      <ScrollArea
+        ref={scrollAreaRef}
+        className="flex-1 p-4 h-[calc(100vh-16rem)]"
+      >
         <div className="space-y-4">
           {messages.map((message) => (
             <div key={message.id}>

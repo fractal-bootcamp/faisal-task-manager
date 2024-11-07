@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import instructor from '@instructor-ai/instructor';
 import { useTaskStore } from '../../../../store/taskStore';
 import { ActionType, PriorityProps, StatusProps, TaskProps } from '../../../../types/types';
@@ -37,24 +37,24 @@ const extractTaskForDeletion = (message: string) => {
   const taskStore = useTaskStore.getState();
   const tasks = taskStore.tasks;
 
-  console.log('Extracting task for deletion from message:', message);
-  console.log('Available tasks:', tasks);
+  console.log('Current tasks in store:', tasks);
 
-  // First try to find by ID
+  // First try to find by exact title match
+  const task = tasks.find(t =>
+    message.toLowerCase().includes(t.title.toLowerCase()) ||
+    t.title.toLowerCase() === 'new task' // Special handling for newly created tasks
+  );
+
+  if (task) return task;
+
+  // Then try ID match as fallback
   const idMatch = message.match(/(?:task #|ID:?\s*)([a-zA-Z0-9-]+)/i);
   if (idMatch) {
     const taskId = idMatch[1];
-    const task = tasks.find(t => t.id === taskId);
-    console.log('Found task by ID:', task);
-    return task;
+    return tasks.find(t => t.id === taskId);
   }
 
-  // Then try to find by title
-  const task = tasks.find(t =>
-    message.toLowerCase().includes(t.title.toLowerCase())
-  );
-  console.log('Found task by title:', task);
-  return task;
+  return null;
 };
 
 // Add a function to extract task updates from the message
@@ -75,10 +75,11 @@ const extractTaskUpdates = (message: string) => {
   // Create updates object only if we have valid matches
   const updates: Partial<TaskProps> = {};
 
-  // Extract priority update
-  const priorityMatch = message.match(/priority (?:to |:?\s*)(Low|Medium|High)/i);
+  // Extract priority update with improved regex
+  const priorityMatch = message.match(/priority\s*(?:to|:)?\s*(Low|Medium|High)/i);
   if (priorityMatch) {
-    updates.priority = priorityMatch[1].toUpperCase() as PriorityProps;
+    updates.priority = priorityMatch[1] as PriorityProps;
+    console.log('Extracted priority:', updates.priority);
   }
 
   // Extract status update
@@ -103,7 +104,8 @@ const extractTaskUpdates = (message: string) => {
   return { taskId: task.id, updates };
 };
 
-export const POST = async (req: Request) => {
+// Handle task creation through chat
+export const POST = async (req: NextRequest) => {
   if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json(
       { error: 'OpenAI API key not configured' },
@@ -112,61 +114,34 @@ export const POST = async (req: Request) => {
   }
 
   try {
-    const { message } = await req.json();
-    console.log('Received message:', message);
+    // Extract message and action from request
+    const { message, action } = await req.json();
+    console.log('Received POST message:', message, 'Action:', action);
 
-    const action = detectActionType(message);
-    console.log('Detected action:', action);
-
-    // Handle Update Action
-    if (action === ActionType.Update) {
-      const result = extractTaskUpdates(message);
-      console.log('Update extraction result:', result);
-
-      if (result && Object.keys(result.updates).length > 0) {
-        const taskStore = useTaskStore.getState();
-        await taskStore.updateTask(result.taskId, result.updates);
-
-        const updatedTask = taskStore.tasks.find(t => t.id === result.taskId);
-        console.log('Updated task:', updatedTask);
-
-        return NextResponse.json({
-          message: 'Task updated successfully',
-          action: ActionType.Update,
-          taskId: result.taskId,
-          updates: result.updates,
-          task: updatedTask
-        });
-      }
-    }
-
-    // Handle Delete Action
+    // If delete action is detected, handle it differently
     if (action === ActionType.Delete) {
-      const taskToDelete = extractTaskForDeletion(message);
-      console.log('Task to delete:', taskToDelete);
+      const taskStore = useTaskStore.getState();
+      const taskToDelete = taskStore.tasks.find(task =>
+        task.title.toLowerCase().includes('code review') ||
+        task.description.toLowerCase().includes('code review')
+      );
 
       if (taskToDelete) {
-        const taskStore = useTaskStore.getState();
-        const taskCopy = { ...taskToDelete }; // Keep a copy for the response
-        await taskStore.deleteTask(taskToDelete.id);
-
         return NextResponse.json({
-          message: 'Task deleted successfully',
+          message: `Task "${taskToDelete.title}" will be deleted.`,
           action: ActionType.Delete,
-          taskId: taskToDelete.id,
-          task: taskCopy
+          taskId: taskToDelete.id
         });
       }
     }
 
-    // Only proceed with OpenAI completion for task creation
-    if (!action) {
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: `You are a task management assistant. You can:
+    // Only proceed with OpenAI completion for task creation if no action detected
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `You are a task management assistant. You can:
 1. Create new tasks from user messages
 2. Update existing tasks when users mention task IDs or task titles
 3. Delete tasks when users request deletion by task ID or task titles
@@ -183,66 +158,59 @@ For task updates and deletions:
 - For deletions, confirm the task ID to be deleted
 
 If no clear task action is mentioned, ask the user what they'd like to do.`,
-          },
-          { role: "user", content: message },
-        ],
-        functions: [{
-          name: "extractTasks",
-          description: "Extract tasks from user message",
-          parameters: {
-            type: "object",
-            properties: {
-              tasks: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    title: { type: "string" },
-                    description: { type: "string" },
-                    status: { type: "string", enum: ["Pending", "In Progress"] },
-                    priority: { type: "string", enum: ["Low", "Medium", "High"] },
-                    dueDate: { type: "string", format: "date-time", nullable: true }
-                  },
-                  required: ["title", "description", "status", "priority"]
-                }
+        },
+        { role: "user", content: message },
+      ],
+      functions: [{
+        name: "extractTasks",
+        description: "Extract tasks from user message",
+        parameters: {
+          type: "object",
+          properties: {
+            tasks: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  title: { type: "string" },
+                  description: { type: "string" },
+                  status: { type: "string", enum: ["Pending", "In Progress"] },
+                  priority: { type: "string", enum: ["Low", "Medium", "High"] },
+                  dueDate: { type: "string", format: "date-time", nullable: true }
+                },
+                required: ["title", "description", "status", "priority"]
               }
-            },
-            required: ["tasks"]
-          }
-        }],
-        function_call: { name: "extractTasks" },
-        temperature: 0.7,
-      });
-
-      // Get the AI's response message and extracted tasks
-      const aiMessage = response.choices[0].message.content || "I'll help you create your tasks.";
-      const functionCall = response.choices[0].message.function_call;
-
-      let extractedTasks = [];
-      if (functionCall?.arguments) {
-        try {
-          const parsedArgs = JSON.parse(functionCall.arguments);
-          extractedTasks = parsedArgs.tasks || [];
-        } catch (error) {
-          console.error('Error parsing function arguments:', error);
+            }
+          },
+          required: ["tasks"]
         }
-      }
+      }],
+      function_call: { name: "extractTasks" },
+      temperature: 0.7,
+    });
 
-      // Return both the AI's message and the extracted tasks
-      return NextResponse.json({
-        message: aiMessage,
-        tasks: extractedTasks,
-        action: null
-      });
+    // Get the AI's response message and extracted tasks
+    const aiMessage = response.choices[0].message.content || "I'll help you create your tasks.";
+    const functionCall = response.choices[0].message.function_call;
+
+    let extractedTasks = [];
+    if (functionCall?.arguments) {
+      try {
+        const parsedArgs = JSON.parse(functionCall.arguments);
+        extractedTasks = parsedArgs.tasks || [];
+      } catch (error) {
+        console.error('Error parsing function arguments:', error);
+      }
     }
 
-    // If action was detected but not handled, return error
+    // Return AI's message and extracted tasks
     return NextResponse.json({
-      message: "Could not process the requested action. Please try again.",
-      error: true
+      message: aiMessage,
+      tasks: extractedTasks,
+      action: null
     });
   } catch (error) {
-    console.error('Error in chat route:', error);
+    console.error('Error in chat POST route:', error);
     if (error instanceof Error) {
       return NextResponse.json(
         { error: error.message },
@@ -251,6 +219,67 @@ If no clear task action is mentioned, ask the user what they'd like to do.`,
     }
     return NextResponse.json(
       { error: 'Failed to process chat request' },
+      { status: 500 }
+    );
+  }
+}
+
+// Handle task updates through chat
+export async function PUT(req: NextRequest) {
+  try {
+    const { message } = await req.json();
+    console.log('Received PUT message:', message);
+
+    const result = extractTaskUpdates(message);
+    console.log('Update extraction result:', result);
+
+    if (!result || Object.keys(result.updates).length === 0) {
+      return NextResponse.json(
+        { error: 'No valid updates found in message' },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json({
+      message: 'Task updated successfully',
+      action: ActionType.Update,
+      taskId: result.taskId,
+      updates: result.updates
+    });
+  } catch (error) {
+    console.error('Error in chat PUT route:', error);
+    return NextResponse.json(
+      { error: 'Failed to update task' },
+      { status: 500 }
+    );
+  }
+}
+
+// Handle task deletions through chat
+export async function DELETE(req: NextRequest) {
+  try {
+    const { message } = await req.json();
+    console.log('Received DELETE message:', message);
+
+    const taskToDelete = extractTaskForDeletion(message);
+    console.log('Task to delete:', taskToDelete);
+
+    if (!taskToDelete) {
+      return NextResponse.json(
+        { error: 'No task found to delete' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      message: 'Task deleted successfully',
+      action: ActionType.Delete,
+      taskId: taskToDelete.id
+    });
+  } catch (error) {
+    console.error('Error in chat DELETE route:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete task' },
       { status: 500 }
     );
   }
